@@ -1052,7 +1052,7 @@ function editFile(id) {
     if (f.saved || !FILES.includes(f)) return;
     f.saved = true; f.time = '刚刚'; f.timeN = 0;
     showBanner(`「${f.name}」已为您自动沉淀至资料库`, [
-      { label: '撤回', cb: () => { f.saved = false; f.edits = 0; if (state.page === 'lib') renderAll(); toast('已撤回，文件回到「本地产物」'); } },
+      { label: '撤回', cb: () => { f.saved = false; f.edits = 0; if (state.page === 'lib') renderAll(); toast('已撤回'); } },
     ]);
     if (state.page === 'lib') renderAll();
   }, 4000);
