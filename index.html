@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v10</title>
+<title>KerWork 资料库 · 原型 v11</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -470,6 +470,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 }
 .sugg:hover { border-color: #ccc; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
 
+.kb-grp-row.drop-hint, .g-card.drop-hint { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #d8d8dc; border-radius: 4px; }
 </style>
@@ -676,14 +677,13 @@ function rowHtml(f, view, lv) {
   const starTitle = f.saved
     ? (view === 'mine' ? '取消沉淀（从我的资料移除）' : '更新到我的资料（覆盖新版）')
     : '沉淀到我的资料';
-  return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}">
+  return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}"${view === 'mine' ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <div class="c-name">${icHtml(f, 26)}<span class="nm">${f.name}</span>
       <span class="c-inline">
         <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-save="${f.id}" title="${starTitle}">${svgStar(f.saved)}</button>
       </span>
     </div>
     <div class="c-mid">
-      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${view === 'mine' ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -726,7 +726,7 @@ function groupedHtml(list, mode) {
 }
 function folderRowHtml(fd) {
   const open = state.expand && state.expand.t === 'folder' && state.expand.id === fd.id;
-  return `<div class="kb-grp-row ${open ? '' : 'closed'}" data-fold="${fd.id}">
+  return `<div class="kb-grp-row ${open ? '' : 'closed'}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     <span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${fd.files.length} 个文件</span>
     <span class="c-inline" style="margin-left:4px"><button class="kb-ic-btn" data-fmore="${fd.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></span>
@@ -735,10 +735,10 @@ function folderRowHtml(fd) {
 }
 function folderDetailHtml(fd) {
   const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
-  if (!items.length) return `<div class="kb-detail"><div class="kb-row sub" style="cursor:default"><span class="c-td">空文件夹 · 在文件的 ⋯ 菜单中选择「移动到」即可移入</span></div></div>`;
+  if (!items.length) return `<div class="kb-detail"><div class="kb-row sub" style="cursor:default"><span class="c-td">空文件夹 · 把文件拖到这里即可移入</span></div></div>`;
   if (state.view === 'grid') return `<div class="kb-detail" style="padding:8px"><div class="kb-grid">${items.map(cardHtml).join('')}</div></div>`;
   return `<div class="kb-detail">${items.map(f => `
-    <div class="kb-row sub" data-fid="${f.id}">
+    <div class="kb-row sub" data-fid="${f.id}" draggable="true" data-dragfid="${f.id}">
       <div class="c-name">${icHtml(f, 24)}<span class="nm">${f.name}</span>
         <span class="c-inline"><button class="kb-ic-btn" data-rmfrom="${fd.id}:${f.id}" title="移出文件夹"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>
       </div>
@@ -749,13 +749,12 @@ function folderDetailHtml(fd) {
 }
 function cardHtml(f) {
   const mine = state.knav === 'mine';
-  return `<div class="g-card" data-fid="${f.id}">
+  return `<div class="g-card" data-fid="${f.id}"${mine ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消沉淀（从我的资料移除）' : '更新快照到我的资料') : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
     <div class="g-ic">${icHtml(f, 40)}</div>
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
     <div class="g-acts">
-      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${mine ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -763,7 +762,7 @@ function cardHtml(f) {
 }
 function folderCardHtml(fd) {
   const open = state.expand && state.expand.t === 'folder' && state.expand.id === fd.id;
-  return `<div class="g-card ${open ? 'open' : ''}" data-fold="${fd.id}">
+  return `<div class="g-card ${open ? 'open' : ''}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <div class="g-ic"><span class="kb-fic" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span></div>
     <div class="g-name">${fd.name}</div>
     <div class="g-meta">${fd.files.length} 个文件</div>
@@ -892,7 +891,7 @@ function createFolder() {
   FOLDERS.push(fd);
   state.knav = 'mine'; state.expand = { t: 'folder', id: fd.id };
   renderAll();
-  toast('已创建文件夹，可通过文件 ⋯ 菜单移动资料');
+  toast('已创建文件夹，将文件拖到文件夹上即可移入');
 }
 
 /* ============ 删除确认弹窗 ============ */
@@ -916,19 +915,14 @@ function confirmDlg(opts) {
   m.onclick = e => { if (e.target === m) close(); };
 }
 
-/* ============ 更多操作（重命名 / 移动 / 删除） ============ */
+/* ============ 更多操作（重命名 / 打开方式 / 删除，移入文件夹靠拖拽） ============ */
 function openMoreMenu(id, btn) {
   const f = FILES.find(x => x.id === id);
   if (!f) return;
   const m = $('#moreMenu');
-  const folders = FOLDERS.length
-    ? FOLDERS.map(fd => `<button class="menu-item" data-mv="${fd.id}">${svgFolderSm} ${fd.name}${f.folderId === fd.id ? ' ✓' : ''}</button>`).join('')
-    : `<div class="menu-label">还没有文件夹</div>`;
   m.innerHTML = `
     <button class="menu-item" data-rn="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>重命名</button>
-    <div class="menu-label">移动到</div>
-    ${folders}
-    <button class="menu-item" data-newfold="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新建文件夹并移入</button>
+    <button class="menu-item" data-ow="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>打开方式</button>
     <div class="menu-sep"></div>
     <button class="menu-item" data-del="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除</button>`;
   const r = btn.getBoundingClientRect();
@@ -940,19 +934,9 @@ function openMoreMenu(id, btn) {
     const nn = prompt('重命名文件', f.name);
     if (nn && nn.trim()) { f.name = nn.trim(); renderAll(); toast('已重命名'); }
   };
-  m.querySelectorAll('[data-mv]').forEach(n => n.onclick = () => {
-    const fd = FOLDERS.find(x => x.id === n.dataset.mv);
-    if (!fd.files.includes(f.id)) fd.files.push(f.id);
-    closeMenus(); renderAll(); toast(`已移动到「${fd.name}」`);
-  });
-  m.querySelector('[data-newfold]').onclick = () => {
+  m.querySelector('[data-ow]').onclick = () => {
     closeMenus();
-    const name = prompt('新文件夹名称', '未命名文件夹');
-    if (!name || !name.trim()) return;
-    const fd = { id: 'F' + folderSeq++, name: name.trim(), files: [f.id] };
-    f.folderId = fd.id;
-    FOLDERS.push(fd);
-    renderAll(); toast(`已创建「${fd.name}」并移入`);
+    openOpenWith(f.id, r.left - 160, r.bottom + 6);
   };
   m.querySelector('[data-del]').onclick = () => {
     closeMenus();
@@ -1449,7 +1433,7 @@ $('#sortMenu').onclick = e => {
 function bindContent() {
   const el = $('#kbContent');
   el.querySelectorAll('[data-fid]').forEach(n => n.onclick = e => {
-    if (e.target.closest('[data-save],[data-preview],[data-openwith],[data-rmfrom]')) return;
+    if (e.target.closest('[data-save],[data-preview],[data-rmfrom]')) return;
     previewWindow(+n.dataset.fid);
   });
   el.querySelectorAll('[data-fid]').forEach(n => n.oncontextmenu = e => {
@@ -1468,10 +1452,29 @@ function bindContent() {
     renderContent();
   });
   el.querySelectorAll('[data-task]').forEach(b => b.onclick = e => { e.stopPropagation(); addToTask(+b.dataset.task); });
-  el.querySelectorAll('[data-openwith]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    const r = b.getBoundingClientRect();
-    openOpenWith(+b.dataset.openwith, r.left - 160, r.bottom + 6);
+  el.querySelectorAll('[data-dragfid]').forEach(n => {
+    n.ondragstart = e => {
+      e.dataTransfer.setData('text/plain', n.dataset.dragfid);
+      e.dataTransfer.effectAllowed = 'move';
+    };
+  });
+  el.querySelectorAll('[data-dropfolder]').forEach(n => {
+    n.ondragover = e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; n.classList.add('drop-hint'); };
+    n.ondragleave = e => { if (!n.contains(e.relatedTarget)) n.classList.remove('drop-hint'); };
+    n.ondrop = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      n.classList.remove('drop-hint');
+      const fid = +e.dataTransfer.getData('text/plain');
+      const fd = FOLDERS.find(x => x.id === n.dataset.dropfolder);
+      const f = FILES.find(x => x.id === fid);
+      if (!fd || !f || fd.files.includes(fid)) return;
+      FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== fid));
+      fd.files.push(fid);
+      f.folderId = fd.id;
+      renderAll();
+      toast(`已移动到「${fd.name}」`);
+    };
   });
   el.querySelectorAll('[data-more]').forEach(b => b.onclick = e => { e.stopPropagation(); openMoreMenu(+b.dataset.more, b); });
   el.querySelectorAll('[data-fmore]').forEach(b => b.onclick = e => { e.stopPropagation(); openFolderMenu(b.dataset.fmore, b); });
