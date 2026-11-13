@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v16</title>
+<title>KerWork 资料库 · 原型 v17</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -677,7 +677,6 @@ function rowHtml(f, view, lv) {
       </span>
     </div>
     <div class="c-mid">
-      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${view === 'mine' ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -749,7 +748,6 @@ function cardHtml(f) {
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
     <div class="g-acts">
-      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${mine ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -917,6 +915,7 @@ function openMoreMenu(id, btn) {
   const m = $('#moreMenu');
   m.innerHTML = `
     <button class="menu-item" data-rn="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>重命名</button>
+    <button class="menu-item" data-ow="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>打开方式</button>
     <div class="menu-sep"></div>
     <button class="menu-item" data-del="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除</button>`;
   const r = btn.getBoundingClientRect();
@@ -928,6 +927,13 @@ function openMoreMenu(id, btn) {
     const nn = prompt('重命名文件', f.name);
     if (nn && nn.trim()) { f.name = nn.trim(); renderAll(); toast('已重命名'); }
   };
+  const ow = m.querySelector('[data-ow]');
+  const openOwFlyout = () => {
+    const ir = ow.getBoundingClientRect();
+    openOpenWith(f.id, ir.right + 4, ir.top - 4);
+  };
+  ow.onmouseenter = openOwFlyout;
+  ow.onclick = openOwFlyout;
   m.querySelector('[data-del]').onclick = () => {
     closeMenus();
     confirmDlg({
@@ -1337,7 +1343,7 @@ $('#sortMenu').onclick = e => {
 function bindContent() {
   const el = $('#kbContent');
   el.querySelectorAll('[data-fid]').forEach(n => n.onclick = e => {
-    if (e.target.closest('[data-save],[data-preview],[data-openwith],[data-rmfrom]')) return;
+    if (e.target.closest('[data-save],[data-preview],[data-rmfrom]')) return;
     previewWindow(+n.dataset.fid);
   });
   el.querySelectorAll('[data-fid]').forEach(n => n.oncontextmenu = e => {
@@ -1356,11 +1362,6 @@ function bindContent() {
     renderContent();
   });
   el.querySelectorAll('[data-task]').forEach(b => b.onclick = e => { e.stopPropagation(); addToTask(+b.dataset.task); });
-  el.querySelectorAll('[data-openwith]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    const r = b.getBoundingClientRect();
-    openOpenWith(+b.dataset.openwith, r.left - 160, r.bottom + 6);
-  });
   el.querySelectorAll('[data-dragfid]').forEach(n => {
     n.ondragstart = e => {
       e.dataTransfer.setData('text/plain', n.dataset.dragfid);
