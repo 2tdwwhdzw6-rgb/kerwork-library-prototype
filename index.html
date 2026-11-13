@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v12</title>
+<title>KerWork 资料库 · 原型 v13</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -679,6 +679,7 @@ function rowHtml(f, view, lv) {
       </span>
     </div>
     <div class="c-mid">
+      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${view === 'mine' ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -750,6 +751,7 @@ function cardHtml(f) {
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
     <div class="g-acts">
+      <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
       ${mine ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
@@ -1377,7 +1379,7 @@ $('#sortMenu').onclick = e => {
 function bindContent() {
   const el = $('#kbContent');
   el.querySelectorAll('[data-fid]').forEach(n => n.onclick = e => {
-    if (e.target.closest('[data-save],[data-preview],[data-rmfrom]')) return;
+    if (e.target.closest('[data-save],[data-preview],[data-openwith],[data-rmfrom]')) return;
     previewWindow(+n.dataset.fid);
   });
   el.querySelectorAll('[data-fid]').forEach(n => n.oncontextmenu = e => {
@@ -1396,6 +1398,11 @@ function bindContent() {
     renderContent();
   });
   el.querySelectorAll('[data-task]').forEach(b => b.onclick = e => { e.stopPropagation(); addToTask(+b.dataset.task); });
+  el.querySelectorAll('[data-openwith]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const r = b.getBoundingClientRect();
+    openOpenWith(+b.dataset.openwith, r.left - 160, r.bottom + 6);
+  });
   el.querySelectorAll('[data-dragfid]').forEach(n => {
     n.ondragstart = e => {
       e.dataTransfer.setData('text/plain', n.dataset.dragfid);
