@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v21</title>
+<title>KerWork 资料库 · 原型 v22</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -396,6 +396,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .picker-row.on .pk-check { background: var(--accent); border-color: var(--accent); color: #fff; }
 .picker-foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
 .pk-cnt { font-size: 12px; color: var(--muted); margin-right: auto; }
+.pk-cnt.link { cursor: pointer; text-decoration: underline dotted; }
+.pk-types { display: flex; gap: 6px; padding: 0 16px 8px; flex-wrap: wrap; }
+.pk-type { height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.pk-type.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-deep); }
+.pk-meta { margin-left: 6px; font-size: 10.5px; color: var(--muted); opacity: 0; transition: opacity .12s; white-space: nowrap; }
+.picker-row:hover .pk-meta, .picker-row.active .pk-meta { opacity: 1; }
+.picker-row.active { background: var(--hover); }
+.pk-none { padding: 18px 10px; font-size: 12.5px; color: var(--muted); text-align: center; }
+.pk-none .bn-btn { margin-left: 8px; height: 26px; }
+.pk-selpanel { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px; border-top: 1px dashed var(--line); }
+.pk-selchip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #333; background: var(--hover); border-radius: 8px; padding: 4px 8px; max-width: 220px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pk-selx { color: var(--muted); font-size: 10px; }
 
 /* ============ 预览弹窗 ============ */
 .pv-mask { position: fixed; inset: 0; z-index: 160; background: rgba(22,22,28,.38); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: grid; place-items: center; }
@@ -608,7 +620,7 @@ const svgBack = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" str
 const icHtml = (f, size) => `<span class="file-ic" style="width:${size || 24}px;height:${size || 24}px;background:${f.color};font-size:${size >= 40 ? 11 : 9}px">${f.ext.toUpperCase()}</span>`;
 
 function savedFiles() { return FILES.filter(f => f.saved); }
-function recentFiles() { return FILES.filter(f => f.opened > 0).sort((a, b) => b.opened - a.opened).slice(0, 10); }
+function recentFiles() { return FILES.filter(f => f.opened > 0).sort((a, b) => b.opened - a.opened).slice(0, 5); }
 const TYPE_MAP = { md: '文档', docx: '文档', doc: '文档', pdf: '文档', txt: '文档', xlsx: '表格', csv: '表格', numbers: '表格', pptx: '幻灯片', key: '幻灯片', png: '图片', jpg: '图片', jpeg: '图片', gif: '图片', webp: '图片', mp4: '视频', mov: '视频', mp3: '音频', wav: '音频', html: '网页' };
 const TYPE_OPTIONS = ['全部类型', '文档', '表格', '幻灯片', '图片', '网页'];
 function applyFilter(list) {
@@ -1148,42 +1160,104 @@ function renderLanding(el) {
 
 /* ============ 资料库挑选浮层（+ 菜单入口） ============ */
 let pickerSel = new Set();
+let pickerSelFolders = new Set();
+let pickerType = '全部类型';
+let pickerActive = -1;
+let pickerRows = [];
+let pickerShowSel = false;
 function openPicker() {
-  pickerSel = new Set(home.chips.map(f => f.id));
+  pickerSel = new Set(home.chips.filter(c => !c.isFolder).map(c => c.id));
+  pickerSelFolders = new Set(home.chips.filter(c => c.isFolder).map(c => c.id.replace('fold-', '')));
+  pickerType = '全部类型';
+  pickerActive = -1;
+  pickerShowSel = false;
   renderPicker('');
   $('#pickerMask').classList.remove('hidden');
+  document.addEventListener('keydown', pickerKeys, true);
 }
-function closePicker() { $('#pickerMask').classList.add('hidden'); }
+function closePicker() {
+  $('#pickerMask').classList.add('hidden');
+  document.removeEventListener('keydown', pickerKeys, true);
+}
+function pickerToggle(id, isFolder) {
+  const set = isFolder ? pickerSelFolders : pickerSel;
+  set.has(id) ? set.delete(id) : set.add(id);
+  renderPicker($('#pkSearch').value);
+}
+function pickerKeys(e) {
+  if ($('#pickerMask').classList.contains('hidden')) return;
+  if (e.key === 'Escape') { closePicker(); return; }
+  if (e.key === 'Enter') { const b = $('#pkAdd'); if (b) b.click(); return; }
+  if (!pickerRows.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    pickerActive = e.key === 'ArrowDown' ? Math.min(pickerRows.length - 1, pickerActive + 1) : Math.max(0, pickerActive - 1);
+    renderPicker($('#pkSearch').value);
+    const el = $('#pickerBox').querySelector('[data-rowindex="' + pickerActive + '"]');
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    const r = pickerRows[pickerActive];
+    if (r) pickerToggle(r.id, r.isFolder);
+  }
+}
 function renderPicker(q) {
   q = (q || '').toLowerCase();
-  const row = f => `<div class="picker-row ${pickerSel.has(f.id) ? 'on' : ''}" data-pid="${f.id}">
-    ${icHtml(f, 26)}<span class="pk-name">${f.name}</span><span class="pk-ext">${f.ext.toUpperCase()}</span>
+  const typeOk = f => pickerType === '全部类型' || TYPE_MAP[f.ext] === pickerType;
+  const row = (f, i) => `<div class="picker-row ${pickerSel.has(f.id) ? 'on' : ''} ${pickerActive === i ? 'active' : ''}" data-pid="${f.id}" data-rowindex="${i}">
+    ${icHtml(f, 26)}<span class="pk-name">${f.name}</span><span class="pk-ext">${f.ext.toUpperCase()}</span><span class="pk-meta">${f.size}</span>
     <span class="pk-check">${pickerSel.has(f.id) ? '✓' : ''}</span></div>`;
-  const recent = recentFiles().filter(f => !q || f.name.toLowerCase().includes(q));
-  const rest = sortList(FILES.filter(f => !recent.includes(f) && (!q || f.name.toLowerCase().includes(q))));
+  const frow = (fd, i) => `<div class="picker-row ${pickerSelFolders.has(fd.id) ? 'on' : ''} ${pickerActive === i ? 'active' : ''}" data-fid2="${fd.id}" data-rowindex="${i}">
+    <span class="file-ic" style="width:26px;height:26px;background:#f5b840;font-size:8px">DIR</span><span class="pk-name">${fd.name}</span><span class="pk-ext">${fd.files.length} 个文件</span>
+    <span class="pk-check">${pickerSelFolders.has(fd.id) ? '✓' : ''}</span></div>`;
+  let idx = 0;
+  pickerRows = [];
+  const fileRow = f => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++); };
+  const folderRow = fd => { pickerRows.push({ id: fd.id, isFolder: true }); return frow(fd, idx++); };
+  const files = sortList(FILES.filter(typeOk));
+  const folders = FOLDERS.filter(fd => !q || fd.name.toLowerCase().includes(q));
+  const matched = files.filter(f => !q || f.name.toLowerCase().includes(q));
+  let body;
+  if (q) {
+    const rows = folders.map(folderRow).join('') + matched.map(fileRow).join('');
+    body = `<div class="picker-sec">搜索结果</div>${rows || `<div class="pk-none">无匹配资料<button class="bn-btn" id="pkClear">清空搜索</button></div>`}`;
+  } else {
+    const recent = recentFiles().filter(typeOk);
+    body = `${folders.length ? `<div class="picker-sec">文件夹</div>${folders.map(folderRow).join('')}` : ''}
+      ${recent.length ? `<div class="picker-sec">最近</div>${recent.map(fileRow).join('')}` : ''}
+      <div class="picker-sec">全部资料</div>${files.map(fileRow).join('')}`;
+  }
+  const selCount = pickerSel.size + pickerSelFolders.size;
+  const selNames = [
+    ...[...pickerSelFolders].map(fid => { const fd = FOLDERS.find(x => x.id === fid); return fd ? { kind: 'fold', name: fd.name, id: fid } : null; }),
+    ...[...pickerSel].map(fid => { const f = FILES.find(x => x.id === fid); return f ? { kind: 'file', name: f.name, id: fid } : null; }),
+  ].filter(Boolean);
+  const selPanel = pickerShowSel && selCount ? `<div class="pk-selpanel">${selNames.map(s => `<span class="pk-selchip">${s.name}<button class="pk-selx" data-selx="${s.kind}:${s.id}">✕</button></span>`).join('')}</div>` : '';
+  const typeChips = TYPE_OPTIONS.map(t => `<button class="pk-type ${pickerType === t ? 'on' : ''}" data-ptype="${t}">${t}</button>`).join('');
   $('#pickerBox').innerHTML = `
     <div class="picker-head"><span class="picker-title">从资料库添加</span><button class="kb-ic-btn" id="pkClose">✕</button></div>
     <div class="picker-search">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="pkSearch" placeholder="搜索资料" value="${q.replace(/"/g, '&quot;')}"/>
     </div>
-    <div class="picker-body">
-      ${recent.length ? `<div class="picker-sec">最近</div>${recent.map(row).join('')}` : ''}
-      <div class="picker-sec">全部资料</div>
-      ${rest.map(row).join('') || `<div class="kb-empty">无匹配资料</div>`}
-    </div>
+    <div class="pk-types">${typeChips}</div>
+    <div class="picker-body">${body}</div>
+    ${selPanel}
     <div class="picker-foot">
-      <span class="pk-cnt">已选 ${pickerSel.size} 项</span>
+      <span class="pk-cnt ${selCount ? 'link' : ''}" id="pkCount">已选 ${selCount} 项${selCount ? (pickerShowSel ? ' ▴' : ' ▾') : ''}</span>
       <button class="bn-btn" id="pkCancel">取消</button>
       <button class="bn-btn primary" id="pkAdd">添加到对话</button>
     </div>`;
   $('#pkClose').onclick = closePicker;
   $('#pkCancel').onclick = closePicker;
   $('#pkAdd').onclick = () => {
-    home.chips = [...home.chips, ...FILES.filter(f => pickerSel.has(f.id) && !home.chips.includes(f))];
+    const folderChips = [...pickerSelFolders].map(fid => { const fd = FOLDERS.find(x => x.id === fid); return fd ? { id: 'fold-' + fid, name: fd.name, ext: 'DIR', color: '#f5b840', isFolder: true, count: fd.files.length } : null; }).filter(Boolean).filter(c => !home.chips.some(h => String(h.id) === c.id));
+    const fileChips = FILES.filter(f => pickerSel.has(f.id) && !home.chips.includes(f));
+    home.chips = [...home.chips, ...folderChips, ...fileChips];
+    const n = folderChips.length + fileChips.length;
     closePicker();
     renderHome();
-    toast(`已添加 ${pickerSel.size} 项引用`);
+    toast(`已添加 ${n} 项引用`);
   };
   $('#pkSearch').oninput = e => {
     const pos = e.target.selectionStart;
@@ -1192,11 +1266,17 @@ function renderPicker(q) {
     s.focus();
     s.setSelectionRange(pos, pos);
   };
-  $('#pickerBox').querySelectorAll('[data-pid]').forEach(r => r.onclick = () => {
-    const id = +r.dataset.pid;
-    pickerSel.has(id) ? pickerSel.delete(id) : pickerSel.add(id);
+  const clearBtn = $('#pkClear'); if (clearBtn) clearBtn.onclick = () => renderPicker('');
+  $('#pickerBox').querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { pickerType = b.dataset.ptype; renderPicker($('#pkSearch').value); });
+  $('#pickerBox').querySelectorAll('[data-pid]').forEach(r => r.onclick = () => pickerToggle(+r.dataset.pid, false));
+  $('#pickerBox').querySelectorAll('[data-fid2]').forEach(r => r.onclick = () => pickerToggle(r.dataset.fid2, true));
+  $('#pickerBox').querySelectorAll('[data-selx]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const [kind, id] = b.dataset.selx.split(':');
+    (kind === 'fold' ? pickerSelFolders : pickerSel).delete(kind === 'fold' ? id : +id);
     renderPicker($('#pkSearch').value);
   });
+  const cnt = $('#pkCount'); if (cnt && selCount) cnt.onclick = () => { pickerShowSel = !pickerShowSel; renderPicker($('#pkSearch').value); };
 }
 function msgHtml(m) {
   if (m.role === 'user') return `<div class="msg-user">${m.text}</div>`;
