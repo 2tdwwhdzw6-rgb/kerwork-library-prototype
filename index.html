@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v9</title>
+<title>KerWork 资料库 · 原型 v10</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -94,6 +94,7 @@ input { font-family: inherit; }
 .user-profile:hover { background: var(--hover); }
 .user-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #3ddc84, #10c07a); }
 .user-name { font-size: 13.5px; color: #444; font-weight: 500; }
+.credit-chip { font-size: 11px; color: var(--muted); background: var(--hover); padding: 2px 8px; border-radius: 9px; font-variant-numeric: tabular-nums; }
 .settings-icon { margin-left: auto; color: var(--muted); }
 
 /* ============ Topbar ============ */
@@ -245,8 +246,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   box-shadow: var(--sh-lg);
   transition: transform .28s cubic-bezier(.2,.9,.3,1.15);
   z-index: 150;
+  display: flex; align-items: center; gap: 10px;
 }
 .toast.show { transform: translate(-50%, 0); }
+.tn-btn { height: 22px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.4); background: transparent; color: #fff; font-size: 11.5px; flex-shrink: 0; }
+.tn-btn:hover { background: rgba(255,255,255,.12); }
+.tn-btn.primary { background: var(--accent); border-color: var(--accent); }
 
 /* ============ 新建任务（输入框引用态） ============ */
 .home-wrap { max-width: 620px; margin: 70px auto 0; }
@@ -327,7 +332,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 
 /* ============ 沉淀提示条（对话框上方） ============ */
 .ask-banner {
-  position: fixed; bottom: 128px; z-index: 140;
+  position: fixed; top: 20px; z-index: 140;
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
   display: flex; align-items: center; gap: 12px;
   background: var(--card); border: 1px solid var(--line);
@@ -421,6 +426,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .pv-slide.cover { background: linear-gradient(135deg, var(--accent-soft), rgba(14,181,121,.02)); display: grid; place-items: center; font-size: 16px; font-weight: 700; color: var(--accent-deep); }
 .pv-nosupp { display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 13px; width: 100%; height: 100%; }
 .pv-statusbar { height: 30px; flex-shrink: 0; display: flex; align-items: center; gap: 18px; padding: 0 16px; border-top: 1px solid var(--line-soft); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pv-sim { margin-left: auto; height: 20px; padding: 0 9px; border-radius: 6px; border: 1px dashed var(--line); background: transparent; font-size: 11px; color: var(--muted); cursor: pointer; transition: color .14s var(--ease), border-color .14s var(--ease); }
+.pv-sim:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ============ 删除确认弹窗 ============ */
 .dlg-mask { position: fixed; inset: 0; z-index: 170; background: rgba(0,0,0,.32); display: grid; place-items: center; }
@@ -491,6 +498,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       <div class="user-profile">
         <div class="user-avatar"></div>
         <span class="user-name">Test</span>
+        <span class="credit-chip" id="creditChip" title="积分余额">20 积分</span>
         <svg class="settings-icon" id="settingsBtn" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </div>
     </div>
@@ -558,8 +566,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <!-- 对话 + 菜单 -->
 <div class="menu" id="chatPlusMenu">
   <button class="menu-item" data-cp="file"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>添加文件</button>
-  <button class="menu-item" data-cp="lib"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>资料库</button>
   <button class="menu-item" data-cp="expert"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>专家<span style="margin-left:auto;color:var(--muted)">›</span></button>
+  <button class="menu-item" data-cp="spark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.1 6.9L21 12l-6.9 2.1L12 21l-2.1-6.9L3 12l6.9-2.1z"/></svg>灵光指令</button>
+  <button class="menu-item" data-cp="lib"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>资料库</button>
 </div>
 <!-- 资料库挑选浮层 -->
 <div class="picker-mask hidden" id="pickerMask"><div class="picker" id="pickerBox"></div></div>
@@ -590,7 +599,8 @@ let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
 /* ============ State ============ */
-let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, expand: null, closedWs: {}, autoSink: true, autoPreview: true, autoRetrieval: true };
+let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, expand: null, closedWs: {}, autoSink: true, autoPreview: true, autoRetrieval: true, sinkCount: 0, credits: 20 };
+const SINK_FREE = 2, SINK_COST = 10;
 let home = { chips: [], promptText: '', messages: [], working: false, title: '', timers: [] };
 const freshHome = () => ({ chips: [], promptText: '', messages: [], working: false, title: '', timers: [] });
 
@@ -663,10 +673,13 @@ function headRowHtml() {
   return `<div class="kb-tablehead"><span>名称</span><span></span><span>类型</span><span>时间</span></div>`;
 }
 function rowHtml(f, view, lv) {
+  const starTitle = f.saved
+    ? (view === 'mine' ? '取消沉淀（从我的资料移除）' : '更新到我的资料（覆盖新版）')
+    : '沉淀到我的资料';
   return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}">
     <div class="c-name">${icHtml(f, 26)}<span class="nm">${f.name}</span>
       <span class="c-inline">
-        <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-save="${f.id}" title="${f.saved ? '更新到我的资料（覆盖新版）' : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
+        <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-save="${f.id}" title="${starTitle}">${svgStar(f.saved)}</button>
       </span>
     </div>
     <div class="c-mid">
@@ -735,15 +748,16 @@ function folderDetailHtml(fd) {
     </div>`).join('')}</div>`;
 }
 function cardHtml(f) {
+  const mine = state.knav === 'mine';
   return `<div class="g-card" data-fid="${f.id}">
-    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? '更新快照到我的资料' : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
+    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消沉淀（从我的资料移除）' : '更新快照到我的资料') : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
     <div class="g-ic">${icHtml(f, 40)}</div>
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
     <div class="g-acts">
       <button class="kb-ic-btn" data-openwith="${f.id}" title="打开方式">${svgOpenWith}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
-      <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+      ${mine ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
     </div>
   </div>`;
 }
@@ -755,6 +769,10 @@ function folderCardHtml(fd) {
     <div class="g-meta">${fd.files.length} 个文件</div>
   </div>`;
 }
+function mineEmptyHtml() {
+  if (state.q || state.type !== '全部类型') return `<div class="kb-empty">没有符合条件的资料</div>`;
+  return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有沉淀的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，把常用成果收进来</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
+}
 function mineHtml() {
   const files = sortList(applyFilter(savedFiles()));
   if (state.view === 'grid') {
@@ -765,12 +783,12 @@ function mineHtml() {
       html += `<div class="kb-grp-row" style="margin-top:18px"><span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${items.length} 个文件</span></div>
       <div class="kb-grid" style="margin-top:8px">${items.map(cardHtml).join('') || `<div class="kb-empty" style="padding:22px">空文件夹</div>`}</div>`;
     }
-    if (!FOLDERS.length && !files.length) return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有沉淀的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，把常用成果收进来</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
+    if (!FOLDERS.length && !files.length) return mineEmptyHtml();
     return html;
   }
   const rows = FOLDERS.map(fd => folderRowHtml(fd)).join('')
     + sortList(applyFilter(savedFiles())).map(f => rowHtml(f, 'mine')).join('');
-  return `<div class="kb-list">${headRowHtml()}${rows}</div>${rows ? '' : `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有沉淀的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，把常用成果收进来</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`}`;
+  return `<div class="kb-list">${headRowHtml()}${rows}</div>${rows ? '' : mineEmptyHtml()}`;
 }
 /* ============ 文档内容预览 ============ */
 function gotoRecent() { state.knav = 'recent'; renderAll(); }
@@ -825,7 +843,7 @@ function previewWindow(id) {
       </div>
     </div>
     <div class="pv-paper"><div class="pv-doc">${content}</div></div>
-    <div class="pv-statusbar"><span>页面：1/1</span><span id="pvWc">字数：0</span></div>
+    <div class="pv-statusbar"><span>页面：1/1</span><span id="pvWc">字数：0</span>${f.saved ? '' : `<button class="pv-sim" onclick="simEdits(${f.id})">原型演示：模拟修改 ×3</button>`}</div>
   </div>`;
   m.classList.remove('hidden');
   const doc = m.querySelector('.pv-doc');
@@ -842,7 +860,11 @@ function viewerDocHtml(f) {
 /* ============ 沉淀（版本覆盖） ============ */
 function saveOne(id) {
   const f = FILES.find(x => x.id === id);
-  if (f.saved) { /* 已沉淀的星标 = 再次沉淀更新（快照刷新） */
+  if (!f) return;
+  if (f.saved) {
+    /* 「我的资料」内点击已点亮的 ⭐ = 取消沉淀（轻操作，不弹确认） */
+    if (state.page === 'lib' && state.knav === 'mine') { unsaveOne(f); return; }
+    /* 其余场景：已沉淀的星标 = 再次沉淀更新（快照刷新） */
     touch(id); f.time = '刚刚'; f.timeN = 0; renderAll();
     toast(`「${f.name}」快照已更新`);
     return;
@@ -853,6 +875,13 @@ function saveOne(id) {
   f.saved = true;
   renderAll();
   toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已沉淀到我的资料');
+}
+function unsaveOne(f) {
+  f.saved = false;
+  renderAll();
+  toast(`已从我的资料移除「${f.name}」`, [
+    { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复沉淀'); } } },
+  ]);
 }
 function renderAll() { renderTabs(); renderContent(); }
 
@@ -1028,6 +1057,7 @@ function showBanner(text, actions) {
   b.innerHTML = `<span class="bn-text">${text}</span>` + (actions || []).map((a, i) => `<button class="bn-btn ${i === 0 ? 'primary' : ''}" data-bn="${i}">${a.label}</button>`).join('');
   const sideW = document.querySelector('.sidebar').offsetWidth || 0;
   b.style.left = (sideW + (window.innerWidth - sideW) / 2) + 'px';
+  placeAboveDock(b);
   b.classList.add('show');
   clearTimeout(showBanner._t);
   showBanner._t = setTimeout(() => b.classList.remove('show'), 5000);
@@ -1049,13 +1079,40 @@ function editFile(id) {
   if (!state.autoSink || f.edits < 3 || f.sinkTimer) return;
   f.sinkTimer = setTimeout(() => { /* 模拟 24h 冷却期 */
     f.sinkTimer = null;
-    if (f.saved || !FILES.includes(f)) return;
+    if (f.saved || !FILES.includes(f) || !state.autoSink) return;
+    if (state.sinkCount >= SINK_FREE && state.credits < SINK_COST) {
+      showBanner(`积分不足（本次需 ${SINK_COST} 积分，余额 ${state.credits} 积分），「${f.name}」未自动沉淀；补足积分后文件再次变动时重新触发，期间可手动 ⭐ 沉淀`, [
+        { label: '手动沉淀', cb: () => { saveOne(f.id); } },
+        { label: '知道了', cb: () => {} },
+      ]);
+      return;
+    }
+    const paid = state.sinkCount >= SINK_FREE;
+    if (paid) { state.credits -= SINK_COST; syncCredits(); }
+    state.sinkCount++;
     f.saved = true; f.time = '刚刚'; f.timeN = 0;
-    showBanner(`「${f.name}」已为您自动沉淀至资料库`, [
-      { label: '撤回', cb: () => { f.saved = false; f.edits = 0; if (state.page === 'lib') renderAll(); toast('已撤回'); } },
+    const rem = SINK_FREE - state.sinkCount;
+    const tag = paid
+      ? `（消耗 ${SINK_COST} 积分，余额 ${state.credits} 积分）`
+      : (rem > 0 ? `（本次免费，剩余免费次数 ${rem} 次）` : '（本次免费，免费次数已用完）');
+    showBanner(`「${f.name}」已为您自动沉淀至资料库${tag}`, [
+      { label: '撤回', cb: () => {
+        f.saved = false; f.edits = 0;
+        if (state.page === 'lib') renderAll();
+        toast(paid ? '已撤回，已消耗的积分不返还' : '已撤回');
+      } },
     ]);
     if (state.page === 'lib') renderAll();
   }, 4000);
+}
+function simEdits(id) {
+  closePv();
+  for (let i = 0; i < 3; i++) editFile(id);
+  toast('原型演示：已模拟 3 次修改，24 小时未变动后自动沉淀');
+}
+function syncCredits() {
+  const el = $('#creditChip');
+  if (el) el.textContent = state.credits + ' 积分';
 }
 function askSink(f, reason) {
   if (!state.autoSink || f.saved) return;
@@ -1265,10 +1322,10 @@ function sendTask() {
       ? { id: fileSeq++, name: `${title}.md`, ext: 'md', color: '#0db98a', size: '3 KB', sizeN: .1, ws: null, conv: home.title || '对话', time: '刚刚', timeN: 0, opened: 0, saved: false, ver: 1, tags: [] }
       : { id: fileSeq++, name: `「${domain || title}」领域资料库.md`, ext: 'md', color: '#4a8cf7', size: '86 KB', sizeN: .1, ws: null, conv: 'AI 生成', time: '刚刚', timeN: 0, opened: 0, saved: true, ver: 1, tags: ['资料库'] };
     FILES.push(f);
+    if (ragHit) home.messages.push({ role: 'rag' });
     home.messages.push({ role: 'ai', text: createIntent
       ? `「${title}」已生成完成 ✅ 开头钩子与正文结构参考了你沉淀的资料，可以直接使用，也可以让我继续调整风格。`
       : `「${domain || title}」资料库已生成完成 ✅ 包含：核心概念定义、知识体系框架、经典书籍与论文清单、常用工具与方法论、学习路径五个部分。` });
-    if (ragHit) home.messages.push({ role: 'rag' });
     home.messages.push({ role: 'file', fid: f.id });
     home.working = false;
     if (state.page === 'lib') renderAll();
@@ -1296,7 +1353,7 @@ function renderSettings() {
       <h2 class="set-h2">资料库</h2>
       <div class="set-card">
         <div class="set-row">
-          <div><div class="set-name">自动沉淀资料</div><div class="set-desc">文档修改 ≥3 次且 24 小时未动时，自动沉淀到「我的资料」；多次复用或被认可时主动询问</div></div>
+          <div><div class="set-name">自动沉淀资料</div><div class="set-desc">文档修改 ≥3 次且 24 小时未动时，自动沉淀到「我的资料」；累计前 2 次免费，自第 3 次起每次消耗积分（快速档位）；多次复用或被认可时主动询问</div></div>
           ${sw('autoSink', state.autoSink)}
         </div>
         <div class="set-row">
@@ -1322,12 +1379,30 @@ function render() {
 
 /* ============ Toast / Menus ============ */
 let toastTimer;
-function toast(msg) {
+function convDockTop() {
+  if (state.page === 'home' && home.messages.length && !$('#homePage').classList.contains('hidden')) {
+    const dock = document.querySelector('.chat-dock');
+    if (dock) return dock.getBoundingClientRect().top;
+  }
+  return null;
+}
+function placeAboveDock(el) {
+  const dockTop = convDockTop();
+  if (dockTop) el.style.top = Math.max(12, dockTop - el.offsetHeight - 10) + 'px';
+  else el.style.top = '20px';
+}
+function toast(msg, actions) {
   const t = $('#toastEl');
-  t.textContent = msg;
+  t.innerHTML = `<span class="tn-text">${msg}</span>` + (actions || []).map((a, i) => `<button class="tn-btn ${i === 0 ? 'primary' : ''}" data-tn="${i}">${a.label}</button>`).join('');
+  placeAboveDock(t);
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  t.querySelectorAll('[data-tn]').forEach(btn => btn.onclick = () => {
+    const i = +btn.dataset.tn;
+    t.classList.remove('show');
+    if (actions[i]) actions[i].cb();
+  });
 }
 function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.classList.remove('show')); }
 
@@ -1439,6 +1514,7 @@ $('#chatPlusMenu').onclick = e => {
   closeMenus();
   if (b.dataset.cp === 'lib') openPicker();
   else if (b.dataset.cp === 'file') toast('原型演示：打开系统文件选择器');
+  else if (b.dataset.cp === 'spark') toast('原型演示：选择灵光指令');
   else toast('原型演示：选择专家');
 };
 $('#pickerMask').onclick = e => { if (e.target === e.currentTarget) closePicker(); };
