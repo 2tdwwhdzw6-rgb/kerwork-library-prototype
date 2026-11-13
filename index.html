@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v23</title>
+<title>KerWork 资料库 · 原型 v24</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -403,6 +403,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .pk-meta { margin-left: 6px; font-size: 10.5px; color: var(--muted); opacity: 0; transition: opacity .12s; white-space: nowrap; }
 .picker-row:hover .pk-meta, .picker-row.active .pk-meta { opacity: 1; }
 .picker-row.active { background: var(--hover); }
+.pk-chev { display: grid; place-items: center; width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; cursor: pointer; border-radius: 4px; }
+.pk-chev:hover { color: var(--text); background: rgba(0,0,0,.04); }
+.pk-chev svg { transform: rotate(-90deg); transition: transform .15s var(--ease); }
+.pk-chev.open svg { transform: rotate(0deg); }
+.picker-row.nested { margin-left: 20px; }
 .pk-none { padding: 18px 10px; font-size: 12.5px; color: var(--muted); text-align: center; }
 .pk-none .bn-btn { margin-left: 8px; height: 26px; }
 .pk-selpanel { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px; border-top: 1px dashed var(--line); }
@@ -1150,12 +1155,14 @@ let pickerType = '全部类型';
 let pickerActive = -1;
 let pickerRows = [];
 let pickerShowSel = false;
+let pickerExpanded = new Set();
 function openPicker() {
   pickerSel = new Set(home.chips.filter(c => !c.isFolder).map(c => c.id));
   pickerSelFolders = new Set(home.chips.filter(c => c.isFolder).map(c => c.id.replace('fold-', '')));
   pickerType = '全部类型';
   pickerActive = -1;
   pickerShowSel = false;
+  pickerExpanded = new Set();
   renderPicker('');
   $('#pickerMask').classList.remove('hidden');
   document.addEventListener('keydown', pickerKeys, true);
@@ -1165,8 +1172,20 @@ function closePicker() {
   document.removeEventListener('keydown', pickerKeys, true);
 }
 function pickerToggle(id, isFolder) {
-  const set = isFolder ? pickerSelFolders : pickerSel;
-  set.has(id) ? set.delete(id) : set.add(id);
+  if (isFolder) {
+    if (pickerSelFolders.has(id)) pickerSelFolders.delete(id);
+    else {
+      pickerSelFolders.add(id);
+      const fd = FOLDERS.find(x => x.id === id);
+      if (fd) fd.files.forEach(x => pickerSel.delete(x));
+    }
+  } else {
+    if (pickerSel.has(id)) pickerSel.delete(id);
+    else {
+      pickerSel.add(id);
+      FOLDERS.forEach(fd => { if (fd.files.includes(id)) pickerSelFolders.delete(fd.id); });
+    }
+  }
   renderPicker($('#pkSearch').value);
 }
 function pickerKeys(e) {
@@ -1193,24 +1212,28 @@ function renderPicker(q) {
     ${icHtml(f, 26)}<span class="pk-name">${f.name}</span><span class="pk-ext">${f.ext.toUpperCase()}</span><span class="pk-meta">${f.size}</span>
     <span class="pk-check">${pickerSel.has(f.id) ? '✓' : ''}</span></div>`;
   const frow = (fd, i) => `<div class="picker-row ${pickerSelFolders.has(fd.id) ? 'on' : ''} ${pickerActive === i ? 'active' : ''}" data-fid2="${fd.id}" data-rowindex="${i}">
+    <span class="pk-chev ${pickerExpanded.has(fd.id) ? 'open' : ''}" data-pexp="${fd.id}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>
     <span class="file-ic" style="width:26px;height:26px;background:#f5b840;font-size:8px">DIR</span><span class="pk-name">${fd.name}</span><span class="pk-ext">${fd.files.length} 个文件</span>
     <span class="pk-check">${pickerSelFolders.has(fd.id) ? '✓' : ''}</span></div>`;
   let idx = 0;
   pickerRows = [];
-  const fileRow = f => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++); };
+  const fileRow = (f, nested) => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++).replace('picker-row', 'picker-row' + (nested ? ' nested' : '')); };
   const folderRow = fd => { pickerRows.push({ id: fd.id, isFolder: true }); return frow(fd, idx++); };
+  const folderBlock = fd => folderRow(fd) + (pickerExpanded.has(fd.id)
+    ? (fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean).map(f => fileRow(f, true)).join('') || '<div class="picker-row nested pk-none" style="text-align:left;padding-left:30px">空文件夹</div>')
+    : '');
   const files = sortList(FILES.filter(typeOk));
   const folders = FOLDERS.filter(fd => !q || fd.name.toLowerCase().includes(q));
   const matched = files.filter(f => !q || f.name.toLowerCase().includes(q));
   let body;
   if (q) {
-    const rows = folders.map(folderRow).join('') + matched.map(fileRow).join('');
+    const rows = folders.map(folderBlock).join('') + matched.map(f => fileRow(f, false)).join('');
     body = `<div class="picker-sec">搜索结果</div>${rows || `<div class="pk-none">无匹配资料<button class="bn-btn" id="pkClear">清空搜索</button></div>`}`;
   } else {
     const recent = recentFiles().filter(typeOk);
-    body = `${folders.length ? `<div class="picker-sec">文件夹</div>${folders.map(folderRow).join('')}` : ''}
-      ${recent.length ? `<div class="picker-sec">最近</div>${recent.map(fileRow).join('')}` : ''}
-      <div class="picker-sec">全部资料</div>${files.map(fileRow).join('')}`;
+    body = `${folders.length ? `<div class="picker-sec">文件夹</div>${folders.map(folderBlock).join('')}` : ''}
+      ${recent.length ? `<div class="picker-sec">最近</div>${recent.map(f => fileRow(f, false)).join('')}` : ''}
+      <div class="picker-sec">全部资料</div>${files.map(f => fileRow(f, false)).join('')}`;
   }
   const selCount = pickerSel.size + pickerSelFolders.size;
   const selNames = [
@@ -1255,6 +1278,12 @@ function renderPicker(q) {
   $('#pickerBox').querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { pickerType = b.dataset.ptype; renderPicker($('#pkSearch').value); });
   $('#pickerBox').querySelectorAll('[data-pid]').forEach(r => r.onclick = () => pickerToggle(+r.dataset.pid, false));
   $('#pickerBox').querySelectorAll('[data-fid2]').forEach(r => r.onclick = () => pickerToggle(r.dataset.fid2, true));
+  $('#pickerBox').querySelectorAll('[data-pexp]').forEach(ch => ch.onclick = e => {
+    e.stopPropagation();
+    const fid = ch.dataset.pexp;
+    pickerExpanded.has(fid) ? pickerExpanded.delete(fid) : pickerExpanded.add(fid);
+    renderPicker($('#pkSearch').value);
+  });
   $('#pickerBox').querySelectorAll('[data-selx]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     const [kind, id] = b.dataset.selx.split(':');
