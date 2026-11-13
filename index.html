@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v19</title>
+<title>KerWork 资料库 · 原型 v20</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -329,7 +329,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .chat-send.stop { font-size: 11px; }
 .chat-foot { text-align: center; font-size: 11px; color: #c2c2c6; padding-top: 10px; }
 
-/* ============ 沉淀提示条（对话框上方） ============ */
+/* ============ 收藏提示条（对话框上方） ============ */
 .ask-banner {
   position: fixed; top: 20px; z-index: 140;
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
@@ -668,8 +668,8 @@ function headRowHtml() {
 }
 function rowHtml(f, view, lv) {
   const starTitle = f.saved
-    ? (view === 'mine' ? '取消沉淀（从收藏移除）' : '更新到收藏（覆盖新版）')
-    : '沉淀到收藏';
+    ? (view === 'mine' ? '取消收藏' : '更新到收藏（覆盖新版）')
+    : '收藏';
   return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}"${view === 'mine' ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <div class="c-name">${icHtml(f, 26)}<span class="nm">${f.name}</span>
       <span class="c-inline">
@@ -743,7 +743,7 @@ function folderDetailHtml(fd) {
 function cardHtml(f) {
   const mine = state.knav === 'mine';
   return `<div class="g-card" data-fid="${f.id}"${mine ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
-    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消沉淀（从收藏移除）' : '更新快照到收藏') : '沉淀到收藏'}">${svgStar(f.saved)}</button>
+    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消收藏' : '更新快照到收藏') : '收藏'}">${svgStar(f.saved)}</button>
     <div class="g-ic">${icHtml(f, 40)}</div>
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
@@ -762,31 +762,32 @@ function folderCardHtml(fd) {
   </div>`;
 }
 function mineEmptyHtml() {
-  if (state.q || state.type !== '全部类型') return `<div class="kb-empty">没有符合条件的资料</div>`;
-  return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有沉淀的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，把常用成果收进来</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
+  return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有收藏的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，收藏的资料会收进「默认」文件夹</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
 }
 function mineHtml() {
   const files = sortList(applyFilter(savedFiles()));
+  const filtered = state.q || state.type !== '全部类型';
+  const guide = !savedFiles().length && !filtered ? mineEmptyHtml()
+    : filtered && !files.length && !FOLDERS.length ? '<div class="kb-empty">没有符合条件的资料</div>' : '';
   if (state.view === 'grid') {
-    let html = `<div class="kb-grid">${FOLDERS.map(folderCardHtml).join('')}${files.map(cardHtml).join('')}</div>`;
+    let html = `${guide}<div class="kb-grid">${FOLDERS.map(folderCardHtml).join('')}${files.map(cardHtml).join('')}</div>`;
     const fd = state.expand && state.expand.t === 'folder' ? FOLDERS.find(x => x.id === state.expand.id) : null;
     if (fd) {
       const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
       html += `<div class="kb-grp-row" style="margin-top:18px"><span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${items.length} 个文件</span></div>
       <div class="kb-grid" style="margin-top:8px">${items.map(cardHtml).join('') || `<div class="kb-empty" style="padding:22px">空文件夹</div>`}</div>`;
     }
-    if (!FOLDERS.length && !files.length) return mineEmptyHtml();
     return html;
   }
   const rows = FOLDERS.map(fd => folderRowHtml(fd)).join('')
-    + sortList(applyFilter(savedFiles())).map(f => rowHtml(f, 'mine')).join('');
-  return `<div class="kb-list">${headRowHtml()}${rows}</div>${rows ? '' : mineEmptyHtml()}`;
+    + files.map(f => rowHtml(f, 'mine')).join('');
+  return `${guide}<div class="kb-list">${headRowHtml()}${rows}</div>`;
 }
 /* ============ 文档内容预览 ============ */
 function gotoRecent() { state.knav = 'recent'; renderAll(); }
 const PREVIEW_TEXT = {
   4: { h: '小红书爆款文案', ps: ['标题：新同事来了，个个都是专家', '正文：工作与生活，万事可 Work。11 位专家上线，写文案、做 PPT、分析数据，一个对话框全搞定。', '让专业，更有价值。'] },
-  5: { h: '竞品功能对比报告', ps: ['本报告对比了 3 款桌面 AI 助手在任务编排、文件管理、专家生态三个维度的差异。', '结论：KerWork 以「本地文件 + 任务对话 + 成果沉淀」的闭环为核心差异化能力。'], list: ['任务编排：支持多步任务与定时任务', '资料库：产物自动归档，可复用', '隐私：全流程本地执行'] },
+  5: { h: '竞品功能对比报告', ps: ['本报告对比了 3 款桌面 AI 助手在任务编排、文件管理、专家生态三个维度的差异。', '结论：KerWork 以「本地文件 + 任务对话 + 成果收藏」的闭环为核心差异化能力。'], list: ['任务编排：支持多步任务与定时任务', '资料库：产物自动归档，可复用', '隐私：全流程本地执行'] },
   8: { h: '埋点需求', ps: ['本文档整理了客户端埋点的技术方案与验收标准。', '埋点分为页面曝光、点击行为、停留时长三类，统一上报至数据网关。'], list: ['免费配额值需结合存储成本模型最终确定', '团队空间是否支持外部成员加入，涉及权限体系扩展', 'AI 全库检索是否需要逐次用户确认，需结合安全评审结论'] },
 };
 /* ============ 打开方式（沿用系统右键菜单心智） ============ */
@@ -849,14 +850,14 @@ function viewerDocHtml(f) {
   return `<h1>${t.h}</h1><div class="byline">AI 助手</div>${t.ps.map(p => `<p>${p}</p>`).join('')}${t.list ? `<h2>要点</h2><ul>${t.list.map(li => `<li>${li}</li>`).join('')}</ul>` : ''}`;
 }
 
-/* ============ 沉淀（版本覆盖） ============ */
+/* ============ 收藏（版本覆盖） ============ */
 function saveOne(id) {
   const f = FILES.find(x => x.id === id);
   if (!f) return;
   if (f.saved) {
-    /* 「收藏」内点击已点亮的 ⭐ = 取消沉淀（轻操作，不弹确认） */
+    /* 「收藏」内点击已点亮的 ⭐ = 取消收藏（轻操作，不弹确认） */
     if (state.page === 'lib' && state.knav === 'mine') { unsaveOne(f); return; }
-    /* 其余场景：已沉淀的星标 = 再次沉淀更新（快照刷新） */
+    /* 其余场景：已收藏的星标 = 再次收藏更新（快照刷新） */
     touch(id); f.time = '刚刚'; f.timeN = 0; renderAll();
     toast(`「${f.name}」快照已更新`);
     return;
@@ -867,7 +868,7 @@ function saveOne(id) {
   f.saved = true;
   putInDefault(f);
   renderAll();
-  toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已沉淀到收藏');
+  toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已收藏');
 }
 function putInDefault(f) {
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
@@ -882,7 +883,7 @@ function unsaveOne(f) {
   delete f.folderId;
   renderAll();
   toast(`已从收藏移除「${f.name}」`, [
-    { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复沉淀'); } } },
+    { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复收藏'); } } },
   ]);
 }
 function renderAll() { renderTabs(); renderContent(); }
@@ -1006,7 +1007,7 @@ function openFolderMenu(id, btn) {
   };
 }
 
-/* ============ 轻提示横幅 / 询问式沉淀 ============ */
+/* ============ 轻提示横幅 / 询问式收藏 ============ */
 function showBanner(text, actions) {
   const b = $('#askBanner');
   b.innerHTML = `<span class="bn-text">${text}</span>` + (actions || []).map((a, i) => `<button class="bn-btn ${i === 0 ? 'primary' : ''}" data-bn="${i}">${a.label}</button>`).join('');
@@ -1024,8 +1025,8 @@ function showBanner(text, actions) {
 }
 function askSink(f, reason) {
   if (f.saved) return;
-  showBanner(`${reason}，要沉淀到「收藏」吗？`, [
-    { label: '沉淀', cb: () => { saveOne(f.id); } },
+  showBanner(`${reason}，要收藏吗？`, [
+    { label: '收藏', cb: () => { saveOne(f.id); } },
     { label: '忽略', cb: () => {} },
   ]);
 }
@@ -1183,7 +1184,7 @@ function msgHtml(m) {
     return `<div class="file-card">
       <span class="att-icon" style="background:${f.color}">${f.ext.toUpperCase()}</span>
       <span class="att-txt"><div class="att-name">${f.name}</div>${f.saved ? '<div class="att-ext">已保存到「收藏」</div>' : ''}</span>
-      <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-cstar="${f.id}" title="${f.saved ? '更新快照到收藏' : '沉淀到收藏'}">${svgStar(f.saved)}</button>
+      <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-cstar="${f.id}" title="${f.saved ? '更新快照到收藏' : '收藏'}">${svgStar(f.saved)}</button>
       <button class="chat-ow" data-cow="${f.id}">打开方式 ▾</button>
     </div>`;
   }
@@ -1232,7 +1233,7 @@ function sendTask() {
     FILES.push(f);
     if (ragHit) home.messages.push({ role: 'rag' });
     home.messages.push({ role: 'ai', text: createIntent
-      ? `「${title}」已生成完成 ✅ 开头钩子与正文结构参考了你沉淀的资料，可以直接使用，也可以让我继续调整风格。`
+      ? `「${title}」已生成完成 ✅ 开头钩子与正文结构参考了你收藏的资料，可以直接使用，也可以让我继续调整风格。`
       : `「${domain || title}」资料库已生成完成 ✅ 包含：核心概念定义、知识体系框架、经典书籍与论文清单、常用工具与方法论、学习路径五个部分。` });
     home.messages.push({ role: 'file', fid: f.id });
     home.working = false;
