@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v13</title>
+<title>KerWork 资料库 · 原型 v14</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -547,8 +547,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <div class="menu" id="newMenu">
   <button class="menu-item" data-nm="folder"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>新建文件夹</button>
   <button class="menu-item" data-nm="upload"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上传文件</button>
-  <div class="menu-sep"></div>
-  <button class="menu-item" data-nm="ai-sink"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.1 6.9L21 12l-6.9 2.1L12 21l-2.1-6.9L3 12l6.9-2.1z"/></svg>AI 沉淀对话</button>
 </div>
 <!-- 快速添加菜单 -->
 <div class="menu" id="addMenu"></div>
@@ -997,41 +995,6 @@ function openFolderMenu(id, btn) {
   };
 }
 
-/* ============ AI 主动沉淀 / 生成资料 ============ */
-function aiSink() {
-  home = freshHome();
-  home.title = 'AI 沉淀对话';
-  state.page = 'home';
-  home.messages.push({ role: 'ai', text: '好的，我正在后台回顾你最近的对话，看看有哪些值得沉淀的资料…' });
-  home.working = true;
-  render();
-  home.timers.push(setTimeout(() => {
-    home.messages.push({ role: 'ai', text: '已扫描最近 12 个对话，发现 2 份高价值内容：\n· 深度思考相关的讨论与笔记\n· 产品分析高频场景的结论沉淀' });
-    render();
-  }, 1600));
-  home.timers.push(setTimeout(() => {
-    const mk = (name, tags) => ({ id: fileSeq++, name, ext: 'md', color: '#4a8cf7', size: '16 KB', sizeN: .1, ws: null, conv: 'AI 沉淀 · 来自最近对话', time: '刚刚', timeN: 0, opened: 0, saved: true, ver: 1, tags });
-    const f1 = mk('深度思考知识体系梳理.md', ['学习']);
-    const f2 = mk('高频场景知识库-产品分析.md', ['工作']);
-    FILES.push(f1, f2);
-    home.messages.push({ role: 'ai', text: '已自动沉淀 2 份资料到「我的资料」，可随时移出或整理。' });
-    home.messages.push({ role: 'file', fid: f1.id });
-    home.messages.push({ role: 'file', fid: f2.id });
-    home.working = false;
-    if (state.page === 'lib') renderAll();
-    render();
-    showBanner('已自动沉淀 2 份资料到「我的资料」', [
-      { label: '撤销', cb: () => {
-        [f1, f2].forEach(f => { f.saved = false; });
-        home.messages.push({ role: 'ai', text: '已撤销本次沉淀。' });
-        if (state.page === 'lib') renderAll();
-        render();
-        toast('已撤销 AI 沉淀');
-      } },
-    ]);
-  }, 3200));
-}
-
 /* ============ 轻提示横幅 / 询问式沉淀 ============ */
 function showBanner(text, actions) {
   const b = $('#askBanner');
@@ -1460,7 +1423,6 @@ $('#newMenu').onclick = e => {
   const act = b.dataset.nm;
   if (act === 'folder') createFolder();
   else if (act === 'upload') toast('原型演示：打开系统文件选择器上传');
-  else if (act === 'ai-sink') aiSink();
 };
 $('#chatPlusMenu').onclick = e => {
   const b = e.target.closest('[data-cp]');
