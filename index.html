@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v18</title>
+<title>KerWork 资料库 · 原型 v19</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -589,7 +589,7 @@ const FILES = [
   { id: 10, name: '年度总结模板.docx',     ext: 'docx', color: '#0e9db8', size: '156 KB', sizeN: .2,  ws: null,      conv: null,                   time: '8月25日',  timeN: 12, opened: 0,  saved: true,  ver: 1, tags: ['模板'] },
   { id: 11, name: '周报汇报框架.pptx',     ext: 'pptx', color: '#0e9db8', size: '1.2 MB', sizeN: 1.2, ws: null,      conv: null,                   time: '8月18日',  timeN: 18, opened: 0,  saved: false, ver: 1, tags: ['模板'] },
 ];
-let FOLDERS = [{ id: 'F0', name: '默认', files: [] }];
+let FOLDERS = [{ id: 'F0', name: '默认', files: [4, 9, 10] }];
 let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
@@ -865,11 +865,21 @@ function saveOne(id) {
   const dup = savedFiles().find(x => x.conv === f.conv && x.name === f.name);
   if (dup) { dup.saved = false; f.ver = dup.ver + 1; }
   f.saved = true;
+  putInDefault(f);
   renderAll();
   toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已沉淀到收藏');
 }
+function putInDefault(f) {
+  FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
+  let def = FOLDERS.find(x => x.id === 'F0');
+  if (!def) { def = { id: 'F0', name: '默认', files: [] }; FOLDERS.unshift(def); }
+  def.files.push(f.id);
+  f.folderId = def.id;
+}
 function unsaveOne(f) {
   f.saved = false;
+  FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
+  delete f.folderId;
   renderAll();
   toast(`已从收藏移除「${f.name}」`, [
     { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复沉淀'); } } },
