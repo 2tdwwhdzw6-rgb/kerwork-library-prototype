@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v11</title>
+<title>KerWork 资料库 · 原型 v12</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -94,7 +94,6 @@ input { font-family: inherit; }
 .user-profile:hover { background: var(--hover); }
 .user-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #3ddc84, #10c07a); }
 .user-name { font-size: 13.5px; color: #444; font-weight: 500; }
-.credit-chip { font-size: 11px; color: var(--muted); background: var(--hover); padding: 2px 8px; border-radius: 9px; font-variant-numeric: tabular-nums; }
 .settings-icon { margin-left: auto; color: var(--muted); }
 
 /* ============ Topbar ============ */
@@ -426,8 +425,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .pv-slide.cover { background: linear-gradient(135deg, var(--accent-soft), rgba(14,181,121,.02)); display: grid; place-items: center; font-size: 16px; font-weight: 700; color: var(--accent-deep); }
 .pv-nosupp { display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 13px; width: 100%; height: 100%; }
 .pv-statusbar { height: 30px; flex-shrink: 0; display: flex; align-items: center; gap: 18px; padding: 0 16px; border-top: 1px solid var(--line-soft); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.pv-sim { margin-left: auto; height: 20px; padding: 0 9px; border-radius: 6px; border: 1px dashed var(--line); background: transparent; font-size: 11px; color: var(--muted); cursor: pointer; transition: color .14s var(--ease), border-color .14s var(--ease); }
-.pv-sim:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ============ 删除确认弹窗 ============ */
 .dlg-mask { position: fixed; inset: 0; z-index: 170; background: rgba(0,0,0,.32); display: grid; place-items: center; }
@@ -499,7 +496,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
       <div class="user-profile">
         <div class="user-avatar"></div>
         <span class="user-name">Test</span>
-        <span class="credit-chip" id="creditChip" title="积分余额">20 积分</span>
         <svg class="settings-icon" id="settingsBtn" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </div>
     </div>
@@ -600,8 +596,7 @@ let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
 /* ============ State ============ */
-let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, expand: null, closedWs: {}, autoSink: true, autoPreview: true, autoRetrieval: true, sinkCount: 0, credits: 20 };
-const SINK_FREE = 2, SINK_COST = 10;
+let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, expand: null, closedWs: {}, autoPreview: true, autoRetrieval: true };
 let home = { chips: [], promptText: '', messages: [], working: false, title: '', timers: [] };
 const freshHome = () => ({ chips: [], promptText: '', messages: [], working: false, title: '', timers: [] });
 
@@ -842,7 +837,7 @@ function previewWindow(id) {
       </div>
     </div>
     <div class="pv-paper"><div class="pv-doc">${content}</div></div>
-    <div class="pv-statusbar"><span>页面：1/1</span><span id="pvWc">字数：0</span>${f.saved ? '' : `<button class="pv-sim" onclick="simEdits(${f.id})">原型演示：模拟修改 ×3</button>`}</div>
+    <div class="pv-statusbar"><span>页面：1/1</span><span id="pvWc">字数：0</span></div>
   </div>`;
   m.classList.remove('hidden');
   const doc = m.querySelector('.pv-doc');
@@ -1025,7 +1020,7 @@ function aiSink() {
     render();
     showBanner('已自动沉淀 2 份资料到「我的资料」', [
       { label: '撤销', cb: () => {
-        [f1, f2].forEach(f => { f.saved = false; f.edits = 0; });
+        [f1, f2].forEach(f => { f.saved = false; });
         home.messages.push({ role: 'ai', text: '已撤销本次沉淀。' });
         if (state.page === 'lib') renderAll();
         render();
@@ -1035,7 +1030,7 @@ function aiSink() {
   }, 3200));
 }
 
-/* ============ 自动沉淀（规则引擎模拟） ============ */
+/* ============ 轻提示横幅 / 询问式沉淀 ============ */
 function showBanner(text, actions) {
   const b = $('#askBanner');
   b.innerHTML = `<span class="bn-text">${text}</span>` + (actions || []).map((a, i) => `<button class="bn-btn ${i === 0 ? 'primary' : ''}" data-bn="${i}">${a.label}</button>`).join('');
@@ -1051,55 +1046,8 @@ function showBanner(text, actions) {
     if (actions[i]) actions[i].cb();
   });
 }
-function editFile(id) {
-  const f = FILES.find(x => x.id === id);
-  if (!f) return;
-  f.edits = (f.edits || 0) + 1;
-  if (f.saved) { /* 热更新：已沉淀的资料始终展示最新修改 */
-    f.time = '刚刚'; f.timeN = 0;
-    if (state.page === 'lib') renderAll();
-    return;
-  }
-  if (!state.autoSink || f.edits < 3 || f.sinkTimer) return;
-  f.sinkTimer = setTimeout(() => { /* 模拟 24h 冷却期 */
-    f.sinkTimer = null;
-    if (f.saved || !FILES.includes(f) || !state.autoSink) return;
-    if (state.sinkCount >= SINK_FREE && state.credits < SINK_COST) {
-      showBanner(`积分不足（本次需 ${SINK_COST} 积分，余额 ${state.credits} 积分），「${f.name}」未自动沉淀；补足积分后文件再次变动时重新触发，期间可手动 ⭐ 沉淀`, [
-        { label: '手动沉淀', cb: () => { saveOne(f.id); } },
-        { label: '知道了', cb: () => {} },
-      ]);
-      return;
-    }
-    const paid = state.sinkCount >= SINK_FREE;
-    if (paid) { state.credits -= SINK_COST; syncCredits(); }
-    state.sinkCount++;
-    f.saved = true; f.time = '刚刚'; f.timeN = 0;
-    const rem = SINK_FREE - state.sinkCount;
-    const tag = paid
-      ? `（消耗 ${SINK_COST} 积分，余额 ${state.credits} 积分）`
-      : (rem > 0 ? `（本次免费，剩余免费次数 ${rem} 次）` : '（本次免费，免费次数已用完）');
-    showBanner(`「${f.name}」已为您自动沉淀至资料库${tag}`, [
-      { label: '撤回', cb: () => {
-        f.saved = false; f.edits = 0;
-        if (state.page === 'lib') renderAll();
-        toast(paid ? '已撤回，已消耗的积分不返还' : '已撤回');
-      } },
-    ]);
-    if (state.page === 'lib') renderAll();
-  }, 4000);
-}
-function simEdits(id) {
-  closePv();
-  for (let i = 0; i < 3; i++) editFile(id);
-  toast('原型演示：已模拟 3 次修改，24 小时未变动后自动沉淀');
-}
-function syncCredits() {
-  const el = $('#creditChip');
-  if (el) el.textContent = state.credits + ' 积分';
-}
 function askSink(f, reason) {
-  if (!state.autoSink || f.saved) return;
+  if (f.saved) return;
   showBanner(`${reason}，要沉淀到「我的资料」吗？`, [
     { label: '沉淀', cb: () => { saveOne(f.id); } },
     { label: '忽略', cb: () => {} },
@@ -1336,10 +1284,6 @@ function renderSettings() {
       </div>
       <h2 class="set-h2">资料库</h2>
       <div class="set-card">
-        <div class="set-row">
-          <div><div class="set-name">自动沉淀资料</div><div class="set-desc">文档修改 ≥3 次且 24 小时未动时，自动沉淀到「我的资料」；累计前 2 次免费，自第 3 次起每次消耗积分（快速档位）；多次复用或被认可时主动询问</div></div>
-          ${sw('autoSink', state.autoSink)}
-        </div>
         <div class="set-row">
           <div><div class="set-name">自动检索资料库</div><div class="set-desc">开启后先对输入做意图分析，命中资料类意图时才检索「我的资料」并在回答中标注引用；检索使用最低推理强度，控制消耗</div></div>
           ${sw('autoRetrieval', state.autoRetrieval)}
