@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v20</title>
+<title>KerWork 资料库 · 原型 v21</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -722,7 +722,7 @@ function folderRowHtml(fd) {
   return `<div class="kb-grp-row ${open ? '' : 'closed'}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     <span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${fd.files.length} 个文件</span>
-    <span class="c-inline" style="margin-left:4px"><button class="kb-ic-btn" data-fmore="${fd.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></span>
+    <span class="c-inline" style="margin-left:4px"><button class="kb-ic-btn" data-ftask="${fd.id}" title="添加到对话">${svgAddChat}</button><button class="kb-ic-btn" data-fmore="${fd.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></span>
   </div>
   ${open ? folderDetailHtml(fd) : ''}`;
 }
@@ -759,6 +759,7 @@ function folderCardHtml(fd) {
     <div class="g-ic"><span class="kb-fic" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span></div>
     <div class="g-name">${fd.name}</div>
     <div class="g-meta">${fd.files.length} 个文件</div>
+    <div class="g-acts"><button class="kb-ic-btn" data-ftask="${fd.id}" title="添加到对话">${svgAddChat}</button></div>
   </div>`;
 }
 function mineEmptyHtml() {
@@ -1043,13 +1044,23 @@ function addToTask(id) {
   toast('已添加到新对话输入框');
   if (f.uses >= 2) setTimeout(() => askSink(f, `「${f.name}」已被多次复用`), 600);
 }
+function addFolderToTask(fid) {
+  const fd = FOLDERS.find(x => x.id === fid);
+  if (!fd) return;
+  const chip = { id: 'fold-' + fid, name: fd.name, ext: 'DIR', color: '#f5b840', isFolder: true, count: fd.files.length };
+  home = freshHome();
+  home.chips = [chip];
+  state.page = 'home';
+  render();
+  toast(`文件夹「${fd.name}」已添加到新对话输入框`);
+}
 function renderHome() {
   const el = $('#homePage');
   if (!home.messages.length) { renderLanding(el); return; }
   const chipHtml = home.chips.map(f => `
     <div class="att-chip">
       <span class="att-icon" style="background:${f.color}">${f.ext.toUpperCase()}</span>
-      <span class="att-txt"><div class="att-name">${f.name}</div><div class="att-ext">${f.ext}</div></span>
+      <span class="att-txt"><div class="att-name">${f.name}</div><div class="att-ext">${f.isFolder ? f.count + ' 个文件' : f.ext}</div></span>
       <button class="att-x" data-rmchip="${f.id}">✕</button>
     </div>`).join('');
   const msgs = home.messages.map(msgHtml).join('') + (home.working ? workHtml() : '');
@@ -1099,7 +1110,7 @@ function renderLanding(el) {
   const chipHtml = home.chips.map(f => `
     <div class="att-chip">
       <span class="att-icon" style="background:${f.color}">${f.ext.toUpperCase()}</span>
-      <span class="att-txt"><div class="att-name">${f.name}</div><div class="att-ext">${f.ext}</div></span>
+      <span class="att-txt"><div class="att-name">${f.name}</div><div class="att-ext">${f.isFolder ? f.count + ' 个文件' : f.ext}</div></span>
       <button class="att-x" data-rmchip="${f.id}">✕</button>
     </div>`).join('');
   el.innerHTML = `
@@ -1120,7 +1131,19 @@ function renderLanding(el) {
   if (home.promptText) { inp.value = home.promptText; home.promptText = ''; }
   if (home.chips.length || inp.value) { inp.focus(); inp.placeholder = '描述你想让 KerWork 做什么…'; }
   inp.onkeydown = e => { if (e.key === 'Enter') sendTask(); };
-  el.querySelector('.att-plus').onclick = openPicker;
+  el.querySelector('.att-plus').onclick = e => {
+    e.stopPropagation();
+    const m = $('#chatPlusMenu');
+    const open = m.classList.contains('show');
+    closeMenus();
+    if (!open) {
+      const r = e.currentTarget.getBoundingClientRect();
+      m.style.top = 'auto';
+      m.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+      m.style.left = r.left + 'px';
+      m.classList.add('show');
+    }
+  };
 }
 
 /* ============ 资料库挑选浮层（+ 菜单入口） ============ */
@@ -1397,6 +1420,7 @@ function bindContent() {
       toast(`已移动到「${fd.name}」`);
     };
   });
+  el.querySelectorAll('[data-ftask]').forEach(b => b.onclick = e => { e.stopPropagation(); addFolderToTask(b.dataset.ftask); });
   el.querySelectorAll('[data-more]').forEach(b => b.onclick = e => { e.stopPropagation(); openMoreMenu(+b.dataset.more, b); });
   el.querySelectorAll('[data-fmore]').forEach(b => b.onclick = e => { e.stopPropagation(); openFolderMenu(b.dataset.fmore, b); });
   $('#kbGroupBtn').onclick = () => { state.groupConv = !state.groupConv; renderAll(); };
@@ -1420,7 +1444,7 @@ $('#kbNewBtn').onclick = e => {
 $('#settingsBtn').onclick = e => { e.stopPropagation(); state.page = 'settings'; render(); };
 $('#homePage').onclick = e => {
   const x = e.target.closest('[data-rmchip]');
-  if (x) { home.chips = home.chips.filter(f => f.id !== +x.dataset.rmchip); render(); }
+  if (x) { home.chips = home.chips.filter(f => String(f.id) !== x.dataset.rmchip); render(); }
 };
 $('#newTaskBtn').onclick = () => { home = freshHome(); state.page = 'home'; render(); };
 $('#newMenu').onclick = e => {
