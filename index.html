@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v17</title>
+<title>KerWork 资料库 · 原型 v18</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -527,7 +527,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
         </header>
         <nav class="kb-toolbar">
           <button class="kb-tab on" data-knav="recent">最近<span class="cnt" id="recentCnt"></span></button>
-          <button class="kb-tab" data-knav="mine">我的资料<span class="cnt" id="mineCnt"></span></button>
+          <button class="kb-tab" data-knav="mine">收藏<span class="cnt" id="mineCnt"></span></button>
           <div class="kb-toolbar-right">
             <button class="kb-sort" id="kbGroupBtn" style="display:none"></button>
             <button class="kb-sort" id="kbTypeBtn"></button>
@@ -589,7 +589,7 @@ const FILES = [
   { id: 10, name: '年度总结模板.docx',     ext: 'docx', color: '#0e9db8', size: '156 KB', sizeN: .2,  ws: null,      conv: null,                   time: '8月25日',  timeN: 12, opened: 0,  saved: true,  ver: 1, tags: ['模板'] },
   { id: 11, name: '周报汇报框架.pptx',     ext: 'pptx', color: '#0e9db8', size: '1.2 MB', sizeN: 1.2, ws: null,      conv: null,                   time: '8月18日',  timeN: 18, opened: 0,  saved: false, ver: 1, tags: ['模板'] },
 ];
-let FOLDERS = [];
+let FOLDERS = [{ id: 'F0', name: '默认', files: [] }];
 let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
@@ -668,8 +668,8 @@ function headRowHtml() {
 }
 function rowHtml(f, view, lv) {
   const starTitle = f.saved
-    ? (view === 'mine' ? '取消沉淀（从我的资料移除）' : '更新到我的资料（覆盖新版）')
-    : '沉淀到我的资料';
+    ? (view === 'mine' ? '取消沉淀（从收藏移除）' : '更新到收藏（覆盖新版）')
+    : '沉淀到收藏';
   return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}"${view === 'mine' ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <div class="c-name">${icHtml(f, 26)}<span class="nm">${f.name}</span>
       <span class="c-inline">
@@ -743,7 +743,7 @@ function folderDetailHtml(fd) {
 function cardHtml(f) {
   const mine = state.knav === 'mine';
   return `<div class="g-card" data-fid="${f.id}"${mine ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
-    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消沉淀（从我的资料移除）' : '更新快照到我的资料') : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
+    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消沉淀（从收藏移除）' : '更新快照到收藏') : '沉淀到收藏'}">${svgStar(f.saved)}</button>
     <div class="g-ic">${icHtml(f, 40)}</div>
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
@@ -854,7 +854,7 @@ function saveOne(id) {
   const f = FILES.find(x => x.id === id);
   if (!f) return;
   if (f.saved) {
-    /* 「我的资料」内点击已点亮的 ⭐ = 取消沉淀（轻操作，不弹确认） */
+    /* 「收藏」内点击已点亮的 ⭐ = 取消沉淀（轻操作，不弹确认） */
     if (state.page === 'lib' && state.knav === 'mine') { unsaveOne(f); return; }
     /* 其余场景：已沉淀的星标 = 再次沉淀更新（快照刷新） */
     touch(id); f.time = '刚刚'; f.timeN = 0; renderAll();
@@ -866,12 +866,12 @@ function saveOne(id) {
   if (dup) { dup.saved = false; f.ver = dup.ver + 1; }
   f.saved = true;
   renderAll();
-  toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已沉淀到我的资料');
+  toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已沉淀到收藏');
 }
 function unsaveOne(f) {
   f.saved = false;
   renderAll();
-  toast(`已从我的资料移除「${f.name}」`, [
+  toast(`已从收藏移除「${f.name}」`, [
     { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复沉淀'); } } },
   ]);
 }
@@ -1014,7 +1014,7 @@ function showBanner(text, actions) {
 }
 function askSink(f, reason) {
   if (f.saved) return;
-  showBanner(`${reason}，要沉淀到「我的资料」吗？`, [
+  showBanner(`${reason}，要沉淀到「收藏」吗？`, [
     { label: '沉淀', cb: () => { saveOne(f.id); } },
     { label: '忽略', cb: () => {} },
   ]);
@@ -1172,8 +1172,8 @@ function msgHtml(m) {
     if (!f) return '';
     return `<div class="file-card">
       <span class="att-icon" style="background:${f.color}">${f.ext.toUpperCase()}</span>
-      <span class="att-txt"><div class="att-name">${f.name}</div>${f.saved ? '<div class="att-ext">已保存到「我的资料」</div>' : ''}</span>
-      <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-cstar="${f.id}" title="${f.saved ? '更新快照到我的资料' : '沉淀到我的资料'}">${svgStar(f.saved)}</button>
+      <span class="att-txt"><div class="att-name">${f.name}</div>${f.saved ? '<div class="att-ext">已保存到「收藏」</div>' : ''}</span>
+      <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-cstar="${f.id}" title="${f.saved ? '更新快照到收藏' : '沉淀到收藏'}">${svgStar(f.saved)}</button>
       <button class="chat-ow" data-cow="${f.id}">打开方式 ▾</button>
     </div>`;
   }
@@ -1210,7 +1210,7 @@ function sendTask() {
     const step3 = createIntent ? `生成「${title}」` : '生成结构化资料文档';
     home.messages.push({ role: 'ai', text: optOut
       ? `1️⃣ 意图分析${gate}\n2️⃣ 仅基于本次对话内容\n3️⃣ ${step3}`
-      : `1️⃣ 意图分析：${createIntent ? '内容创作类' : '知识构建类'}请求${gate}\n2️⃣ ${state.autoRetrieval && !optOut ? '检索本机与「我的资料」中的相关素材' : '梳理已有上下文'}\n3️⃣ ${step3}` });
+      : `1️⃣ 意图分析：${createIntent ? '内容创作类' : '知识构建类'}请求${gate}\n2️⃣ ${state.autoRetrieval && !optOut ? '检索本机与「收藏」中的相关素材' : '梳理已有上下文'}\n3️⃣ ${step3}` });
     render();
   }, 1800);
   t(() => {
@@ -1251,7 +1251,7 @@ function renderSettings() {
       <h2 class="set-h2">资料库</h2>
       <div class="set-card">
         <div class="set-row">
-          <div><div class="set-name">自动检索资料库</div><div class="set-desc">开启后先对输入做意图分析，命中资料类意图时才检索「我的资料」并在回答中标注引用；检索使用最低推理强度，控制消耗</div></div>
+          <div><div class="set-name">自动检索资料库</div><div class="set-desc">开启后先对输入做意图分析，命中资料类意图时才检索「收藏」并在回答中标注引用；检索使用最低推理强度，控制消耗</div></div>
           ${sw('autoRetrieval', state.autoRetrieval)}
         </div>
       </div>
