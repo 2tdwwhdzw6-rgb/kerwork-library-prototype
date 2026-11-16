@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v26</title>
+<title>KerWork 资料库 · 原型 v27</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -787,7 +787,6 @@ function folderDetailHtml(fd) {
   return `<div class="kb-detail">${items.map(f => `
     <div class="kb-row sub" data-fid="${f.id}" draggable="true" data-dragfid="${f.id}">
       <div class="c-name">${icHtml(f, 24)}<span class="nm">${f.name}</span>
-        <span class="c-inline"><button class="kb-ic-btn" data-rmfrom="${fd.id}:${f.id}" title="移出文件夹"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>
       </div>
       <div class="c-mid"></div>
       <span class="c-td">${typeLabel(f)}</span>
@@ -1562,7 +1561,7 @@ $('#sortMenu').onclick = e => {
 function bindContent() {
   const el = $('#kbContent');
   el.querySelectorAll('[data-fid]').forEach(n => n.onclick = e => {
-    if (e.target.closest('[data-save],[data-preview],[data-rmfrom]')) return;
+    if (e.target.closest('[data-save],[data-preview]')) return;
     previewWindow(+n.dataset.fid);
   });
   el.querySelectorAll('[data-fid]').forEach(n => n.oncontextmenu = e => {
@@ -1575,7 +1574,7 @@ function bindContent() {
     renderContent();
   });
   el.querySelectorAll('[data-fold]').forEach(n => n.onclick = e => {
-    if (e.target.closest('[data-preview],[data-rmfrom]')) return;
+    if (e.target.closest('[data-preview]')) return;
     const id = n.dataset.fold;
     state.closedFolders[id] = !state.closedFolders[id];
     renderContent();
@@ -1610,14 +1609,16 @@ function bindContent() {
   el.querySelectorAll('[data-fmore]').forEach(b => b.onclick = e => { e.stopPropagation(); openFolderMenu(b.dataset.fmore, b); });
   $('#kbGroupBtn').onclick = () => { state.groupConv = !state.groupConv; renderAll(); };
   el.querySelectorAll('[data-save]').forEach(b => b.onclick = e => { e.stopPropagation(); saveOne(+b.dataset.save); });
-  el.querySelectorAll('[data-rmfrom]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    const [fdId, fid] = b.dataset.rmfrom.split(':');
-    const fd = FOLDERS.find(x => x.id === fdId);
-    fd.files = fd.files.filter(x => x !== +fid);
-    delete FILES.find(x => x.id === +fid).folderId;
-    renderAll(); toast('已从文件夹移出');
-  });
+  el.ondragover = e => { e.preventDefault(); };
+  el.ondrop = e => {
+    const fid = +e.dataTransfer.getData('text/plain');
+    const f = FILES.find(x => x.id === fid);
+    if (!f || !f.folderId) return;
+    FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== fid));
+    delete f.folderId;
+    renderAll();
+    toast(`已移出「${f.name}」，文件移至收藏顶层`);
+  };
 }
 $('#kbNewBtn').onclick = e => {
   e.stopPropagation();
