@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v27</title>
+<title>KerWork 资料库 · 原型 v28</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -730,7 +730,7 @@ function rowHtml(f, view, lv) {
     </div>
     <div class="c-mid">
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
-      ${view === 'mine' ? `<button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>` : ''}
+      <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
     </div>
     <span class="c-td">${typeLabel(f)}</span>
     <span class="c-td">${f.time}</span>
@@ -1025,7 +1025,7 @@ function openMoreMenu(id, btn) {
     confirmDlg({
       title: '删除文件',
       body: `确定要删除「${f.name}」吗？`,
-      desc: '此操作无法撤销',
+      desc: f.saved ? '该文件在「收藏」中的资料将一并删除，此操作无法撤销' : '此操作无法撤销',
       onOk: () => {
         FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
         FILES.splice(FILES.indexOf(f), 1);
