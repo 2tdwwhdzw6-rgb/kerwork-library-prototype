@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v25</title>
+<title>KerWork 资料库 · 原型 v26</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -635,7 +635,7 @@ let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
 /* ============ State ============ */
-let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, expand: null, closedWs: {}, autoPreview: true, autoRetrieval: true };
+let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, closedFolders: {}, closedWs: {}, autoPreview: true, autoRetrieval: true };
 let home = { chips: [], promptText: '', messages: [], working: false, title: '', timers: [] };
 const freshHome = () => ({ chips: [], promptText: '', messages: [], working: false, title: '', timers: [] });
 
@@ -769,14 +769,16 @@ function groupedHtml(list, mode) {
   }
   return html;
 }
-function folderRowHtml(fd) {
-  const open = state.expand && state.expand.t === 'folder' && state.expand.id === fd.id;
+function folderHeaderHtml(fd) {
+  const open = !state.closedFolders[fd.id];
   return `<div class="kb-grp-row ${open ? '' : 'closed'}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     <span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${fd.files.length} 个文件</span>
     <span class="c-inline" style="margin-left:4px"><button class="kb-ic-btn" data-ftask="${fd.id}" title="添加到对话">${svgAddChat}</button><button class="kb-ic-btn" data-fmore="${fd.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button></span>
-  </div>
-  ${open ? folderDetailHtml(fd) : ''}`;
+  </div>`;
+}
+function folderRowHtml(fd) {
+  return folderHeaderHtml(fd) + (!state.closedFolders[fd.id] ? folderDetailHtml(fd) : '');
 }
 function folderDetailHtml(fd) {
   const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
@@ -806,7 +808,7 @@ function cardHtml(f) {
   </div>`;
 }
 function folderCardHtml(fd) {
-  const open = state.expand && state.expand.t === 'folder' && state.expand.id === fd.id;
+  const open = !state.closedFolders[fd.id];
   return `<div class="g-card ${open ? 'open' : ''}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <div class="g-ic"><span class="kb-fic" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span></div>
     <div class="g-name">${fd.name}</div>
@@ -823,13 +825,11 @@ function mineHtml() {
   const guide = !savedFiles().length && !filtered ? mineEmptyHtml()
     : filtered && !files.length && !FOLDERS.length ? '<div class="kb-empty">没有符合条件的资料</div>' : '';
   if (state.view === 'grid') {
-    let html = `${guide}<div class="kb-grid">${FOLDERS.map(folderCardHtml).join('')}${files.map(cardHtml).join('')}</div>`;
-    const fd = state.expand && state.expand.t === 'folder' ? FOLDERS.find(x => x.id === state.expand.id) : null;
-    if (fd) {
+    let html = `${guide}` + FOLDERS.map(fd => {
       const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
-      html += `<div class="kb-grp-row" style="margin-top:18px"><span class="kb-fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>${fd.name}</span><span class="cnt-chip">${items.length} 个文件</span></div>
-      <div class="kb-grid" style="margin-top:8px">${items.map(cardHtml).join('') || `<div class="kb-empty" style="padding:22px">空文件夹</div>`}</div>`;
-    }
+      return folderHeaderHtml(fd) + (state.closedFolders[fd.id] ? '' : `<div class="kb-grid" style="margin:4px 0 8px">${items.map(cardHtml).join('') || '<div class="kb-empty" style="padding:22px">空文件夹</div>'}</div>`);
+    }).join('');
+    if (files.length) html += `<div class="picker-sec pk-sub">未分组</div><div class="kb-grid">${files.map(cardHtml).join('')}</div>`;
     return html;
   }
   const rows = FOLDERS.map(fd => folderRowHtml(fd)).join('')
@@ -969,7 +969,7 @@ function createFolder() {
   closeMenus();
   const fd = { id: 'F' + folderSeq++, name: '未命名文件夹', files: [] };
   FOLDERS.push(fd);
-  state.knav = 'mine'; state.expand = { t: 'folder', id: fd.id };
+  state.knav = 'mine'; delete state.closedFolders[fd.id];
   renderAll();
   toast('已创建文件夹，将文件拖到文件夹上即可移入');
 }
@@ -1062,7 +1062,7 @@ function openFolderMenu(id, btn) {
       onOk: () => {
         fd.files.forEach(fid => { const i = FILES.findIndex(x => x.id === fid); if (i > -1) FILES.splice(i, 1); });
         FOLDERS.splice(FOLDERS.indexOf(fd), 1);
-        if (state.expand && state.expand.t === 'folder' && state.expand.id === fd.id) state.expand = null;
+        delete state.closedFolders[fd.id];
         renderAll(); toast('已删除文件夹及其资料');
       },
     });
@@ -1523,7 +1523,6 @@ function closeMenus() { document.querySelectorAll('.menu').forEach(m => m.classL
 /* ============ Events ============ */
 document.querySelectorAll('.kb-tab').forEach(n => n.onclick = () => {
   state.knav = n.dataset.knav;
-  state.expand = null;
   renderAll();
 });
 $('#kbSearch').oninput = e => { state.q = e.target.value.trim(); renderContent(); };
@@ -1578,7 +1577,7 @@ function bindContent() {
   el.querySelectorAll('[data-fold]').forEach(n => n.onclick = e => {
     if (e.target.closest('[data-preview],[data-rmfrom]')) return;
     const id = n.dataset.fold;
-    state.expand = state.expand && state.expand.t === 'folder' && state.expand.id === id ? null : { t: 'folder', id };
+    state.closedFolders[id] = !state.closedFolders[id];
     renderContent();
   });
   el.querySelectorAll('[data-task]').forEach(b => b.onclick = e => { e.stopPropagation(); addToTask(+b.dataset.task); });
