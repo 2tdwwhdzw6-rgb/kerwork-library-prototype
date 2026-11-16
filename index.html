@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v24</title>
+<title>KerWork 资料库 · 原型 v25</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -313,6 +313,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   font-size: 12px; color: #333;
 }
 .chat-ow:hover { border-color: #ccc; background: #fafafa; }
+.msg-cites {
+  align-self: stretch; background: var(--card);
+  border: 1px dashed var(--line); border-radius: 12px;
+  padding: 10px 14px; font-size: 12px;
+}
+.msg-cites .mc-t { color: #999; display: block; margin-bottom: 6px; }
+.mc-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.mc-item {
+  height: 28px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg);
+  font-size: 12px; color: #333; cursor: pointer;
+}
+.mc-item:hover { border-color: #bbb; background: #fafafa; }
 .chat-dock { flex-shrink: 0; padding: 10px 26px 14px; max-width: 860px; width: 100%; margin: 0 auto; }
 .chat-input {
   display: flex; align-items: center; gap: 10px;
@@ -408,6 +421,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .pk-chev svg { transform: rotate(-90deg); transition: transform .15s var(--ease); }
 .pk-chev.open svg { transform: rotate(0deg); }
 .picker-row.nested { margin-left: 20px; }
+.picker-more { padding-left: 30px; }
+.pk-more-btn {
+  height: 26px; padding: 0 12px; border-radius: 8px;
+  border: 1px dashed var(--line); background: transparent;
+  font-size: 12px; color: #666; cursor: pointer;
+}
+.pk-more-btn:hover { color: #333; border-color: #bbb; background: transparent; }
+.pk-sub { font-size: 11px; color: var(--muted); padding-top: 6px; }
 .pk-none { padding: 18px 10px; font-size: 12.5px; color: var(--muted); text-align: center; }
 .pk-none .bn-btn { margin-left: 8px; height: 26px; }
 .pk-selpanel { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px; border-top: 1px dashed var(--line); }
@@ -565,6 +586,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   <button class="menu-item" data-nm="folder"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>新建文件夹</button>
   <button class="menu-item" data-nm="upload"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>上传文件</button>
 </div>
+<!-- 上传文件选择 -->
+<input type="file" id="fileInput" multiple style="display:none">
 <!-- 快速添加菜单 -->
 <div class="menu" id="addMenu"></div>
 <!-- 排序菜单 -->
@@ -603,10 +626,11 @@ const FILES = [
   { id: 7,  name: '市场调研原始数据.csv',  ext: 'csv',  color: '#10a85e', size: '864 KB', sizeN: .9,  ws: 'Desktop', conv: '整理用户访谈',         time: '8月25日',  timeN: 11, opened: 0,  saved: false, ver: 1, tags: ['数据'] },
   { id: 8,  name: '埋点需求.md',           ext: 'md',   color: '#4a8cf7', size: '12 KB',  sizeN: .1,  ws: 'cs5285',  conv: '帮我分析埋点需求文档', time: '8月12日',  timeN: 24, opened: 1,  saved: false, ver: 1, tags: ['学习'] },
   { id: 9,  name: '期中复习笔记.pdf',      ext: 'pdf',  color: '#e5484d', size: '5.4 MB', sizeN: 5.4, ws: 'cs5285',  conv: '整理期中复习重点',     time: '8月10日',  timeN: 26, opened: 0,  saved: true,  ver: 1, tags: ['学习'] },
-  { id: 10, name: '年度总结模板.docx',     ext: 'docx', color: '#0e9db8', size: '156 KB', sizeN: .2,  ws: null,      conv: null,                   time: '8月25日',  timeN: 12, opened: 0,  saved: true,  ver: 1, tags: ['模板'] },
-  { id: 11, name: '周报汇报框架.pptx',     ext: 'pptx', color: '#0e9db8', size: '1.2 MB', sizeN: 1.2, ws: null,      conv: null,                   time: '8月18日',  timeN: 18, opened: 0,  saved: false, ver: 1, tags: ['模板'] },
+  { id: 10, name: '年度总结模板.docx',     ext: 'docx', color: '#0e9db8', size: '156 KB', sizeN: .2,  ws: null,      conv: null,                   time: '8月25日',  timeN: 12, opened: 0,  saved: true,  ver: 1, tags: ['模板'], uploaded: true, recent: false },
+  { id: 11, name: '周报汇报框架.pptx',     ext: 'pptx', color: '#0e9db8', size: '1.2 MB', sizeN: 1.2, ws: null,      conv: null,                   time: '8月18日',  timeN: 18, opened: 0,  saved: false, ver: 1, tags: ['模板'], uploaded: true, recent: false },
 ];
 let FOLDERS = [{ id: 'F0', name: '默认', files: [4, 9, 10] }];
+FOLDERS.forEach(fd => fd.files.forEach(fid => { const f = FILES.find(x => x.id === fid); if (f) f.folderId = fd.id; }));
 let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
@@ -625,9 +649,10 @@ const svgBack = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" str
 const icHtml = (f, size) => `<span class="file-ic" style="width:${size || 24}px;height:${size || 24}px;background:${f.color};font-size:${size >= 40 ? 11 : 9}px">${f.ext.toUpperCase()}</span>`;
 
 function savedFiles() { return FILES.filter(f => f.saved); }
-function recentFiles() { return FILES.filter(f => f.opened > 0).sort((a, b) => b.opened - a.opened).slice(0, 5); }
+const recentList = () => FILES.filter(f => f.recent !== false);
+function recentFiles() { return recentList().sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN)).slice(0, 5); }
 const TYPE_MAP = { md: '文档', docx: '文档', doc: '文档', pdf: '文档', txt: '文档', xlsx: '表格', csv: '表格', numbers: '表格', pptx: '幻灯片', key: '幻灯片', png: '图片', jpg: '图片', jpeg: '图片', gif: '图片', webp: '图片', mp4: '视频', mov: '视频', mp3: '音频', wav: '音频', html: '网页' };
-const TYPE_OPTIONS = ['全部类型', '文档', '表格', '幻灯片', '图片', '网页'];
+const TYPE_OPTIONS = ['全部类型', '文档', '表格', '幻灯片', '图片', '网页', '视频', '音频'];
 function applyFilter(list) {
   let out = list;
   if (state.type !== '全部类型') out = out.filter(f => TYPE_MAP[f.ext] === state.type);
@@ -638,17 +663,27 @@ function sortList(list) {
   const c = [...list];
   if (state.sort === 'name') return c.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
   if (state.sort === 'size') return c.sort((a, b) => b.sizeN - a.sizeN);
-  return c.sort((a, b) => a.timeN - b.timeN);
+  return c.sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN));
 }
-function touch(id) { const f = FILES.find(x => x.id === id); if (f) f.opened = ++openSeq; }
+let actSeq = 0;
+function touch(id) {
+  const f = FILES.find(x => x.id === id);
+  if (!f) return;
+  f.opened = ++openSeq;
+  f.act = --actSeq;
+  f.time = '刚刚';
+  f.timeN = 0;
+  f.recent = true;
+}
 
 /* ============ Render: 顶部 tabs 与筛选 ============ */
 function renderTabs() {
-  $('#recentCnt').textContent = FILES.length;
+  $('#recentCnt').textContent = recentList().length;
   $('#mineCnt').textContent = savedFiles().length;
   document.querySelectorAll('.kb-tab').forEach(n => n.classList.toggle('on', n.dataset.knav === state.knav));
   const gb = $('#kbGroupBtn');
   gb.style.display = state.knav === 'recent' ? '' : 'none';
+  $('#kbNewBtn').style.display = state.knav === 'mine' ? '' : 'none';
   gb.classList.toggle('on', state.groupConv);
   gb.textContent = state.groupConv ? '取消分组' : '按会话分组';
   $('#kbTypeBtn').innerHTML = `${state.type} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 15 12 9 18 15"/></svg>`;
@@ -664,9 +699,9 @@ function renderTabs() {
 function renderContent() {
   const el = $('#kbContent');
   if (state.knav === 'recent') {
-    const list = sortList(applyFilter(FILES));
+    const list = sortList(applyFilter(recentList()));
     if (!list.length) {
-      el.innerHTML = `<div class="kb-empty">${FILES.length ? '没有符合条件的资料' : '跑一个任务，产物会自动出现在这里'}</div>`;
+      el.innerHTML = `<div class="kb-empty">${recentList().length ? '没有符合条件的资料' : '跑一个任务，产物会自动出现在这里'}</div>`;
     } else if (state.view === 'grid') {
       el.innerHTML = state.groupConv ? groupedHtml(list, 'grid') : `<div class="kb-grid">${list.map(cardHtml).join('')}</div>`;
     } else {
@@ -720,12 +755,12 @@ function groupedHtml(list, mode) {
         : cf.map(f => rowHtml(f, 'recent', 2)).join('');
     }
   }
-  const ungrouped = list.filter(f => !f.ws);
+  const ungrouped = list.filter(f => f.uploaded);
   if (ungrouped.length) {
     const closed = state.closedWs['__tpl'];
     html += `<div class="kb-grp-row ${closed ? 'closed' : ''}" data-ws="__tpl">
       <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7l-2-2H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1z"/></svg></span><span>模板与参考资料</span><span class="cnt-chip">${ungrouped.length} 个文件</span></div>`;
+      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7l-2-2H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1z"/></svg></span><span>本地上传</span><span class="cnt-chip">${ungrouped.length} 个文件</span></div>`;
     if (!closed) {
       html += mode === 'grid'
         ? `<div class="kb-grid" style="margin:4px 0 8px">${ungrouped.map(cardHtml).join('')}</div>`
@@ -780,10 +815,10 @@ function folderCardHtml(fd) {
   </div>`;
 }
 function mineEmptyHtml() {
-  return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有收藏的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，收藏的资料会收进「默认」文件夹</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
+  return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有收藏的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，或通过右上角「新建」上传文件，资料会收进「默认」文件夹</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
 }
 function mineHtml() {
-  const files = sortList(applyFilter(savedFiles()));
+  const files = sortList(applyFilter(savedFiles().filter(f => !f.folderId)));
   const filtered = state.q || state.type !== '全部类型';
   const guide = !savedFiles().length && !filtered ? mineEmptyHtml()
     : filtered && !files.length && !FOLDERS.length ? '<div class="kb-empty">没有符合条件的资料</div>' : '';
@@ -882,9 +917,21 @@ function saveOne(id) {
   }
   /* 同会话 + 同名 → 覆盖旧版，版本 +1 */
   const dup = savedFiles().find(x => x.conv === f.conv && x.name === f.name);
-  if (dup) { dup.saved = false; f.ver = dup.ver + 1; }
+  let keepFolder = null;
+  if (dup) {
+    dup.saved = false;
+    f.ver = dup.ver + 1;
+    keepFolder = dup.folderId || null;
+    FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== dup.id));
+    delete dup.folderId;
+  }
   f.saved = true;
-  putInDefault(f);
+  const keepFd = keepFolder && FOLDERS.find(x => x.id === keepFolder);
+  if (keepFd) {
+    FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== f.id));
+    keepFd.files.push(f.id);
+    f.folderId = keepFd.id;
+  } else putInDefault(f);
   renderAll();
   toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已收藏');
 }
@@ -896,12 +943,23 @@ function putInDefault(f) {
   f.folderId = def.id;
 }
 function unsaveOne(f) {
+  const prevFolder = f.folderId || null;
+  const uploaded = !!f.uploaded;
   f.saved = false;
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
   delete f.folderId;
+  if (uploaded) { const i = FILES.indexOf(f); if (i > -1) FILES.splice(i, 1); }
   renderAll();
-  toast(`已从收藏移除「${f.name}」`, [
-    { label: '撤销', cb: () => { if (FILES.includes(f)) { f.saved = true; renderAll(); toast('已恢复收藏'); } } },
+  toast(uploaded ? `已从收藏移除「${f.name}」，文件已删除` : `已从收藏移除「${f.name}」`, [
+    { label: '撤销', cb: () => {
+      f.saved = true;
+      if (!FILES.includes(f)) FILES.push(f);
+      if (prevFolder) {
+        const fd = FOLDERS.find(x => x.id === prevFolder);
+        if (fd && !fd.files.includes(f.id)) { fd.files.push(f.id); f.folderId = prevFolder; }
+      }
+      renderAll(); toast('已恢复收藏');
+    } },
   ]);
 }
 function renderAll() { renderTabs(); renderContent(); }
@@ -983,8 +1041,8 @@ function openFolderMenu(id, btn) {
   const m = $('#moreMenu');
   m.innerHTML = `
     <button class="menu-item" data-frn="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>重命名</button>
-    <div class="menu-sep"></div>
-    <button class="menu-item" data-fdel="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除文件夹</button>`;
+    ${fd.id === 'F0' ? '' : `<div class="menu-sep"></div>
+    <button class="menu-item" data-fdel="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除文件夹</button>`}`;
   const r = btn.getBoundingClientRect();
   m.style.top = r.bottom + 6 + 'px';
   m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 240)) + 'px';
@@ -994,7 +1052,8 @@ function openFolderMenu(id, btn) {
     const nn = prompt('重命名文件夹', fd.name);
     if (nn && nn.trim()) { fd.name = nn.trim(); renderAll(); toast('已重命名'); }
   };
-  m.querySelector('[data-fdel]').onclick = () => {
+  const fdelBtn = m.querySelector('[data-fdel]');
+  if (fdelBtn) fdelBtn.onclick = () => {
     closeMenus();
     confirmDlg({
       title: '删除文件夹',
@@ -1039,6 +1098,7 @@ function addToTask(id) {
   const f = FILES.find(x => x.id === id);
   if (!f) return;
   f.uses = (f.uses || 0) + 1;
+  touch(id);
   home = freshHome();
   home.chips = [f];
   state.page = 'home';
@@ -1107,6 +1167,10 @@ function renderHome() {
     saveOne(+b.dataset.cstar);
     render();
   });
+  el.querySelectorAll('[data-cite]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    previewWindow(+b.dataset.cite);
+  });
 }
 function renderLanding(el) {
   const chipHtml = home.chips.map(f => `
@@ -1156,13 +1220,15 @@ let pickerActive = -1;
 let pickerRows = [];
 let pickerShowSel = false;
 let pickerExpanded = new Set();
+let pickerMore = {};
 function openPicker() {
   pickerSel = new Set(home.chips.filter(c => !c.isFolder).map(c => c.id));
   pickerSelFolders = new Set(home.chips.filter(c => c.isFolder).map(c => c.id.replace('fold-', '')));
   pickerType = '全部类型';
   pickerActive = -1;
   pickerShowSel = false;
-  pickerExpanded = new Set();
+  pickerExpanded = new Set(FOLDERS.map(fd => fd.id));
+  pickerMore = {};
   renderPicker('');
   $('#pickerMask').classList.remove('hidden');
   document.addEventListener('keydown', pickerKeys, true);
@@ -1202,7 +1268,8 @@ function pickerKeys(e) {
   } else if (e.key === ' ') {
     e.preventDefault();
     const r = pickerRows[pickerActive];
-    if (r) pickerToggle(r.id, r.isFolder);
+    if (r && r.more) { pickerMore[r.id] = (pickerMore[r.id] || 0) + 1; renderPicker($('#pkSearch').value); }
+    else if (r) pickerToggle(r.id, r.isFolder);
   }
 }
 function renderPicker(q) {
@@ -1219,21 +1286,33 @@ function renderPicker(q) {
   pickerRows = [];
   const fileRow = (f, nested) => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++).replace('picker-row', 'picker-row' + (nested ? ' nested' : '')); };
   const folderRow = fd => { pickerRows.push({ id: fd.id, isFolder: true }); return frow(fd, idx++); };
-  const folderBlock = fd => folderRow(fd) + (pickerExpanded.has(fd.id)
-    ? (fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean).map(f => fileRow(f, true)).join('') || '<div class="picker-row nested pk-none" style="text-align:left;padding-left:30px">空文件夹</div>')
-    : '');
+  const match = f => typeOk(f) && (!q || f.name.toLowerCase().includes(q));
+  const folderBlock = fd => {
+    folderRow(fd);
+    if (!pickerExpanded.has(fd.id)) return '';
+    const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean).filter(match);
+    if (!items.length) return '<div class="picker-row nested pk-none" style="text-align:left;padding-left:30px">空文件夹</div>';
+    const shown = Math.min(items.length, 5 + (pickerMore[fd.id] || 0) * 10);
+    let block = items.slice(0, shown).map(f => fileRow(f, true)).join('');
+    if (items.length > shown) {
+      pickerRows.push({ more: true, id: fd.id });
+      block += `<div class="picker-row picker-more ${pickerActive === idx ? 'active' : ''}" data-pmore="${fd.id}" data-rowindex="${idx++}"><button class="pk-more-btn">展开更多（还有 ${items.length - shown} 个）</button></div>`;
+    }
+    return block;
+  };
   const files = sortList(FILES.filter(typeOk));
   const folders = FOLDERS.filter(fd => !q || fd.name.toLowerCase().includes(q));
   const matched = files.filter(f => !q || f.name.toLowerCase().includes(q));
   let body;
   if (q) {
-    const rows = folders.map(folderBlock).join('') + matched.map(f => fileRow(f, false)).join('');
+    const loose = matched.filter(f => !f.folderId);
+    const rows = folders.map(folderBlock).join('') + loose.map(f => fileRow(f, false)).join('');
     body = `<div class="picker-sec">搜索结果</div>${rows || `<div class="pk-none">无匹配资料<button class="bn-btn" id="pkClear">清空搜索</button></div>`}`;
   } else {
-    const recent = recentFiles().filter(typeOk);
-    body = `${folders.length ? `<div class="picker-sec">文件夹</div>${folders.map(folderBlock).join('')}` : ''}
-      ${recent.length ? `<div class="picker-sec">最近</div>${recent.map(f => fileRow(f, false)).join('')}` : ''}
-      <div class="picker-sec">全部资料</div>${files.map(f => fileRow(f, false)).join('')}`;
+    const loose = savedFiles().filter(f => !f.folderId && typeOk(f));
+    const recent = recentList().filter(typeOk).sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN)).slice(0, 5);
+    body = `<div class="picker-sec">收藏</div>${folders.map(folderBlock).join('')}${loose.length ? `<div class="picker-sec pk-sub">未分组</div>${loose.map(f => fileRow(f, false)).join('')}` : ''}
+      <div class="picker-sec">最近</div>${recent.length ? recent.map(f => fileRow(f, false)).join('') : '<div class="pk-none">暂无最近资料</div>'}`;
   }
   const selCount = pickerSel.size + pickerSelFolders.size;
   const selNames = [
@@ -1263,9 +1342,14 @@ function renderPicker(q) {
     const fileChips = FILES.filter(f => pickerSel.has(f.id) && !home.chips.includes(f));
     home.chips = [...home.chips, ...folderChips, ...fileChips];
     const n = folderChips.length + fileChips.length;
+    const reused = [...fileChips, ...folderChips.flatMap(c => { const fd = FOLDERS.find(x => x.id === String(c.id).replace('fold-', '')); return fd ? fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean) : []; })];
+    const uniqReused = [...new Set(reused)];
+    uniqReused.forEach(f => { f.uses = (f.uses || 0) + 1; touch(f.id); });
     closePicker();
     renderHome();
     toast(`已添加 ${n} 项引用`);
+    const hot = uniqReused.find(f => f.uses >= 2 && !f.saved);
+    if (hot) setTimeout(() => askSink(hot, `「${hot.name}」已被多次复用`), 600);
   };
   $('#pkSearch').oninput = e => {
     const pos = e.target.selectionStart;
@@ -1278,6 +1362,7 @@ function renderPicker(q) {
   $('#pickerBox').querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { pickerType = b.dataset.ptype; renderPicker($('#pkSearch').value); });
   $('#pickerBox').querySelectorAll('[data-pid]').forEach(r => r.onclick = () => pickerToggle(+r.dataset.pid, false));
   $('#pickerBox').querySelectorAll('[data-fid2]').forEach(r => r.onclick = () => pickerToggle(r.dataset.fid2, true));
+  $('#pickerBox').querySelectorAll('[data-pmore]').forEach(r => r.onclick = () => { pickerMore[r.dataset.pmore] = (pickerMore[r.dataset.pmore] || 0) + 1; renderPicker($('#pkSearch').value); });
   $('#pickerBox').querySelectorAll('[data-pexp]').forEach(ch => ch.onclick = e => {
     e.stopPropagation();
     const fid = ch.dataset.pexp;
@@ -1295,6 +1380,9 @@ function renderPicker(q) {
 function msgHtml(m) {
   if (m.role === 'user') return `<div class="msg-user">${m.text}</div>`;
   if (m.role === 'rag') return `<div class="msg-rag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>已检索知识库</div>`;
+  if (m.role === 'cites') {
+    return `<div class="msg-cites"><span class="mc-t">本次引用的收藏资料</span><div class="mc-list">${m.ids.map(id => { const f = FILES.find(x => x.id === id); return f ? `<button class="mc-item" data-cite="${id}">📄 ${f.name}</button>` : ''; }).join('')}</div></div>`;
+  }
   if (m.role === 'file') {
     const f = FILES.find(x => x.id === m.fid);
     if (!f) return '';
@@ -1345,14 +1433,18 @@ function sendTask() {
     const createIntent = !/资料库|知识体系|知识库|整理成资料/.test(text) && /文案|文章|报告|ppt|邮件|周报|总结|方案|计划/.test(text);
     const title = text.replace(/^(帮我|给我|请)/, '').replace(/(生成|写|做|整理)一?[篇份个]?/, '').replace(/[「」"]/g, '').replace(/需要.*$/, '').trim() || (createIntent ? '创作文档' : '通用知识');
     const f = createIntent
-      ? { id: fileSeq++, name: `${title}.md`, ext: 'md', color: '#0db98a', size: '3 KB', sizeN: .1, ws: null, conv: home.title || '对话', time: '刚刚', timeN: 0, opened: 0, saved: false, ver: 1, tags: [] }
-      : { id: fileSeq++, name: `「${domain || title}」领域资料库.md`, ext: 'md', color: '#4a8cf7', size: '86 KB', sizeN: .1, ws: null, conv: 'AI 生成', time: '刚刚', timeN: 0, opened: 0, saved: true, ver: 1, tags: ['资料库'] };
+      ? { id: fileSeq++, name: `${title}.md`, ext: 'md', color: '#0db98a', size: '3 KB', sizeN: .1, ws: 'Desktop', conv: home.title || '对话', time: '刚刚', timeN: 0, opened: 0, saved: false, ver: 1, tags: [] }
+      : { id: fileSeq++, name: `「${domain || title}」领域资料库.md`, ext: 'md', color: '#4a8cf7', size: '86 KB', sizeN: .1, ws: 'Desktop', conv: 'AI 生成', time: '刚刚', timeN: 0, opened: 0, saved: true, ver: 1, tags: ['资料库'] };
     FILES.push(f);
     if (ragHit) home.messages.push({ role: 'rag' });
     home.messages.push({ role: 'ai', text: createIntent
       ? `「${title}」已生成完成 ✅ 开头钩子与正文结构参考了你收藏的资料，可以直接使用，也可以让我继续调整风格。`
       : `「${domain || title}」资料库已生成完成 ✅ 包含：核心概念定义、知识体系框架、经典书籍与论文清单、常用工具与方法论、学习路径五个部分。` });
     home.messages.push({ role: 'file', fid: f.id });
+    if (ragHit) {
+      const cites = savedFiles().filter(x => x.id !== f.id).slice(0, 2);
+      if (cites.length) home.messages.push({ role: 'cites', ids: cites.map(x => x.id) });
+    }
     home.working = false;
     if (state.page === 'lib') renderAll();
     render();
@@ -1379,7 +1471,7 @@ function renderSettings() {
       <h2 class="set-h2">资料库</h2>
       <div class="set-card">
         <div class="set-row">
-          <div><div class="set-name">自动检索资料库</div><div class="set-desc">开启后先对输入做意图分析，命中资料类意图时才检索「收藏」并在回答中标注引用；检索使用最低推理强度，控制消耗</div></div>
+          <div><div class="set-name">自动检索资料库</div><div class="set-desc">开启后先对输入做意图分析，命中资料类意图时才检索「收藏」，回答末尾列出本次引用的资料清单；检索使用最低推理强度，控制消耗</div></div>
           ${sw('autoRetrieval', state.autoRetrieval)}
         </div>
       </div>
@@ -1547,7 +1639,25 @@ $('#newMenu').onclick = e => {
   closeMenus();
   const act = b.dataset.nm;
   if (act === 'folder') createFolder();
-  else if (act === 'upload') toast('原型演示：打开系统文件选择器上传');
+  else if (act === 'upload') $('#fileInput').click();
+};
+$('#fileInput').onchange = e => {
+  const picked = [...e.target.files];
+  e.target.value = '';
+  if (!picked.length) return;
+  const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  let added = 0, skipped = 0;
+  picked.forEach(file => {
+    if (FILES.some(x => x.uploaded && x.name === file.name)) { skipped++; return; }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const f = { id: fileSeq++, name: file.name, ext, color: '#8a63d2', size: fmtSize(file.size), sizeN: file.size / 1048576, ws: null, conv: null, time: '刚刚', timeN: 0, opened: 0, saved: true, ver: 1, tags: [], uploaded: true, recent: false };
+    FILES.push(f);
+    putInDefault(f);
+    added++;
+  });
+  state.knav = 'mine';
+  renderAll();
+  toast(added && skipped ? `已上传 ${added} 个文件，${skipped} 个已存在跳过` : added ? `已上传 ${added} 个文件到收藏「默认」文件夹` : '文件已存在，未重复上传');
 };
 $('#chatPlusMenu').onclick = e => {
   const b = e.target.closest('[data-cp]');
