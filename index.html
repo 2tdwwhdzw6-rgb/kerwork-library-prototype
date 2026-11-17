@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v28</title>
+<title>KerWork 资料库 · 原型 v29</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -788,7 +788,10 @@ function folderDetailHtml(fd) {
     <div class="kb-row sub" data-fid="${f.id}" draggable="true" data-dragfid="${f.id}">
       <div class="c-name">${icHtml(f, 24)}<span class="nm">${f.name}</span>
       </div>
-      <div class="c-mid"></div>
+      <div class="c-mid">
+        <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
+        <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+      </div>
       <span class="c-td">${typeLabel(f)}</span>
       <span class="c-td">${f.time}</span>
     </div>`).join('')}</div>`;
