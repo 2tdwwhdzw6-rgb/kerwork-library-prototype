@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v30</title>
+<title>KerWork 资料库 · 原型 v31</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -985,20 +985,10 @@ function openMoreMenu(id, btn) {
   ow.onclick = openOwFlyout;
   m.querySelector('[data-del]').onclick = () => {
     closeMenus();
-    if (state.knav === 'recent') {
-      const wasRecent = f.recent !== false;
-      if (!wasRecent) return;
-      f.recent = false;
-      renderAll();
-      toast('已移出最近', [
-        { label: '撤销', cb: () => { f.recent = true; renderAll(); toast('已恢复到最近'); } },
-      ]);
-      return;
-    }
     confirmDlg({
       title: '删除文件',
       body: `确定要删除「${f.name}」吗？`,
-      desc: '将删除文件实体与收藏条目，此操作无法撤销',
+      desc: '将删除文件实体与对应收藏条目，此操作无法撤销',
       onOk: () => {
         FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
         FILES.splice(FILES.indexOf(f), 1);
