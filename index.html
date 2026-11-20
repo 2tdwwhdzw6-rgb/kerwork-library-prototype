@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v32</title>
+<title>KerWork 资料库 · 原型 v33</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -199,12 +199,11 @@ input { font-family: inherit; }
 .g-ic { margin-bottom: 10px; }
 .g-name { font-size: 13px; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
 .g-meta { font-size: 11px; color: var(--muted); margin-top: 5px; }
-.g-star { position: absolute; top: 10px; right: 10px; color: #f5a623; border: none; background: none; padding: 2px; cursor: pointer; }
+.g-star { border: none; background: none; padding: 2px; cursor: pointer; color: #f5a623; display: grid; place-items: center; }
 .g-star.off { color: #d8d8dc; }
 .g-card:hover .g-star.off { color: #b0b0b5; }
-.g-acts { position: absolute; top: 6px; right: 28px; display: flex; gap: 0; opacity: 0; transition: opacity .12s; }
+.g-acts { position: absolute; top: 5px; right: 5px; display: flex; gap: 0; align-items: center; opacity: 0; transition: opacity .12s; }
 .g-card:hover .g-acts { opacity: 1; }
-.g-card.no-star .g-acts { right: 6px; }
 .kb-detail { background: var(--side-bg); border-bottom: 1px solid var(--line-soft); padding: 6px 0; border-radius: 10px; }
 .kb-empty { text-align: center; padding: 60px 12px; color: var(--muted); font-size: 12.5px; }
 .kb-empty-title { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
@@ -760,19 +759,19 @@ function folderDetailHtml(fd) {
 function cardHtml(f) {
   const mine = state.knav === 'mine';
   return `<div class="g-card" data-fid="${f.id}"${mine ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
-    <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消收藏' : '更新快照到收藏') : '收藏'}">${svgStar(f.saved)}</button>
+    <div class="g-acts">
+      <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+      <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消收藏' : '更新快照到收藏') : '收藏'}">${svgStar(f.saved)}</button>
+      <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
+    </div>
     <div class="g-ic">${icHtml(f, 40)}</div>
     <div class="g-name">${f.name}</div>
     <div class="g-meta">${typeLabel(f)} · ${f.time}</div>
-    <div class="g-acts">
-      <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
-      <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
-    </div>
   </div>`;
 }
 function folderCardHtml(fd) {
   const open = !state.closedFolders[fd.id];
-  return `<div class="g-card no-star ${open ? 'open' : ''}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
+  return `<div class="g-card ${open ? 'open' : ''}" data-fold="${fd.id}" data-dropfolder="${fd.id}">
     <div class="g-ic"><span class="kb-fic" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#f5b840" stroke="#e0a32e" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span></div>
     <div class="g-name">${fd.name}</div>
     <div class="g-meta">${fd.files.length} 个文件</div>
