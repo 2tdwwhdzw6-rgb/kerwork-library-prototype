@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v35</title>
+<title>KerWork 资料库 · 原型 v36</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -374,12 +374,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .tg-switch.on .tg-dot { left: 20px; }
 
 /* ============ 资料库挑选浮层 ============ */
-.picker-mask { position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,.28); display: grid; place-items: center; }
+.picker-mask { position: fixed; inset: 0; z-index: 160; }
 .picker-mask.hidden { display: none !important; }
 .picker {
-  width: 480px; max-width: 92vw; height: 560px; max-height: 84vh;
+  position: fixed; width: 380px; max-width: 92vw; height: 500px; max-height: 72vh;
   background: var(--card); border-radius: 16px;
-  box-shadow: 0 16px 50px rgba(0,0,0,.2);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 50px rgba(0,0,0,.18);
   display: flex; flex-direction: column; overflow: hidden;
   animation: detailIn .18s ease;
 }
@@ -1192,6 +1193,20 @@ function openPicker() {
   pickerExpanded = new Set(FOLDERS.map(fd => fd.id));
   pickerMore = {};
   renderPicker('');
+  const anchor = $('#chatPlusBtn');
+  const box = $('#pickerBox');
+  if (anchor) {
+    const r = anchor.getBoundingClientRect();
+    box.style.left = Math.max(12, r.left) + 'px';
+    box.style.top = 'auto';
+    box.style.bottom = (window.innerHeight - r.top + 10) + 'px';
+    box.style.transform = 'none';
+  } else {
+    box.style.left = '50%';
+    box.style.top = '50%';
+    box.style.bottom = 'auto';
+    box.style.transform = 'translate(-50%, -50%)';
+  }
   $('#pickerMask').classList.remove('hidden');
   document.addEventListener('keydown', pickerKeys, true);
 }
