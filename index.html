@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v29</title>
+<title>KerWork 资料库 · 原型 v30</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -567,7 +567,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <button class="kb-tab on" data-knav="recent">最近<span class="cnt" id="recentCnt"></span></button>
           <button class="kb-tab" data-knav="mine">收藏<span class="cnt" id="mineCnt"></span></button>
           <div class="kb-toolbar-right">
-            <button class="kb-sort" id="kbGroupBtn" style="display:none"></button>
             <button class="kb-sort" id="kbTypeBtn"></button>
             <button class="kb-sort" id="kbSortBtn"></button>
             <div class="vt-group" id="viewToggle"></div>
@@ -635,7 +634,7 @@ let folderSeq = 1, fileSeq = 100, openSeq = 10;
 const SUGGESTIONS = ['做一份年终汇报 PPT', '分析这份销售数据', '查宁德时代最新行情', '写一篇小红书爆款文案'];
 
 /* ============ State ============ */
-let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', groupConv: false, closedFolders: {}, closedWs: {}, autoPreview: true, autoRetrieval: true };
+let state = { page: 'lib', knav: 'recent', type: '全部类型', q: '', sort: 'time', view: 'list', closedFolders: {}, autoPreview: true, autoRetrieval: true };
 let home = { chips: [], promptText: '', messages: [], working: false, title: '', timers: [] };
 const freshHome = () => ({ chips: [], promptText: '', messages: [], working: false, title: '', timers: [] });
 
@@ -681,11 +680,7 @@ function renderTabs() {
   $('#recentCnt').textContent = recentList().length;
   $('#mineCnt').textContent = savedFiles().length;
   document.querySelectorAll('.kb-tab').forEach(n => n.classList.toggle('on', n.dataset.knav === state.knav));
-  const gb = $('#kbGroupBtn');
-  gb.style.display = state.knav === 'recent' ? '' : 'none';
   $('#kbNewBtn').style.display = state.knav === 'mine' ? '' : 'none';
-  gb.classList.toggle('on', state.groupConv);
-  gb.textContent = state.groupConv ? '取消分组' : '按会话分组';
   $('#kbTypeBtn').innerHTML = `${state.type} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 15 12 9 18 15"/></svg>`;
   const sortLabel = { time: '最近更新', name: '按名称', size: '按大小' }[state.sort];
   $('#kbSortBtn').innerHTML = `${sortLabel} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
@@ -703,11 +698,9 @@ function renderContent() {
     if (!list.length) {
       el.innerHTML = `<div class="kb-empty">${recentList().length ? '没有符合条件的资料' : '跑一个任务，产物会自动出现在这里'}</div>`;
     } else if (state.view === 'grid') {
-      el.innerHTML = state.groupConv ? groupedHtml(list, 'grid') : `<div class="kb-grid">${list.map(cardHtml).join('')}</div>`;
+      el.innerHTML = `<div class="kb-grid">${list.map(cardHtml).join('')}</div>`;
     } else {
-      el.innerHTML = state.groupConv
-        ? `<div class="kb-list">${headRowHtml()}${groupedHtml(list, 'list')}</div>`
-        : `<div class="kb-list">${headRowHtml()}${list.map(f => rowHtml(f, 'recent', 0)).join('')}</div>`;
+      el.innerHTML = `<div class="kb-list">${headRowHtml()}${list.map(f => rowHtml(f, 'recent', 0)).join('')}</div>`;
     }
   } else {
     el.innerHTML = mineHtml();
@@ -735,39 +728,6 @@ function rowHtml(f, view, lv) {
     <span class="c-td">${typeLabel(f)}</span>
     <span class="c-td">${f.time}</span>
   </div>`;
-}
-function groupedHtml(list, mode) {
-  let html = '';
-  const workspaces = [...new Set(list.filter(f => f.ws).map(f => f.ws))];
-  for (const ws of workspaces) {
-    const closed = state.closedWs[ws];
-    const wsFiles = sortList(list.filter(f => f.ws === ws));
-    const convs = [...new Set(wsFiles.map(f => f.conv))];
-    html += `<div class="kb-grp-row ${closed ? 'closed' : ''}" data-ws="${ws}">
-      <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span>${ws}</span><span class="cnt-chip">${convs.length} 个会话</span></div>`;
-    if (closed) continue;
-    for (const conv of convs) {
-      const cf = wsFiles.filter(f => f.conv === conv);
-      html += `<div class="kb-grp-row conv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${conv}</span></div>`;
-      html += mode === 'grid'
-        ? `<div class="kb-grid" style="margin:4px 0 8px">${cf.map(cardHtml).join('')}</div>`
-        : cf.map(f => rowHtml(f, 'recent', 2)).join('');
-    }
-  }
-  const ungrouped = list.filter(f => f.uploaded);
-  if (ungrouped.length) {
-    const closed = state.closedWs['__tpl'];
-    html += `<div class="kb-grp-row ${closed ? 'closed' : ''}" data-ws="__tpl">
-      <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7l-2-2H4a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1z"/></svg></span><span>本地上传</span><span class="cnt-chip">${ungrouped.length} 个文件</span></div>`;
-    if (!closed) {
-      html += mode === 'grid'
-        ? `<div class="kb-grid" style="margin:4px 0 8px">${ungrouped.map(cardHtml).join('')}</div>`
-        : ungrouped.map(f => rowHtml(f, 'recent')).join('');
-    }
-  }
-  return html;
 }
 function folderHeaderHtml(fd) {
   const open = !state.closedFolders[fd.id];
@@ -901,7 +861,7 @@ function closePv() { $('#pvMask').classList.add('hidden'); }
 $('#pvMask').onclick = e => { if (e.target === e.currentTarget) closePv(); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#pvMask').classList.contains('hidden')) closePv(); });
 function viewerDocHtml(f) {
-  const t = PREVIEW_TEXT[f.id] || { h: f.name.replace(/\.\w+$/, ''), ps: ['文档内容将在此处预览。', '来源会话：' + (f.conv || '—')], list: null };
+  const t = PREVIEW_TEXT[f.id] || { h: f.name.replace(/\.\w+$/, ''), ps: ['文档内容将在此处预览。'], list: null };
   return `<h1>${t.h}</h1><div class="byline">AI 助手</div>${t.ps.map(p => `<p>${p}</p>`).join('')}${t.list ? `<h2>要点</h2><ul>${t.list.map(li => `<li>${li}</li>`).join('')}</ul>` : ''}`;
 }
 
@@ -1025,10 +985,20 @@ function openMoreMenu(id, btn) {
   ow.onclick = openOwFlyout;
   m.querySelector('[data-del]').onclick = () => {
     closeMenus();
+    if (state.knav === 'recent') {
+      const wasRecent = f.recent !== false;
+      if (!wasRecent) return;
+      f.recent = false;
+      renderAll();
+      toast('已移出最近', [
+        { label: '撤销', cb: () => { f.recent = true; renderAll(); toast('已恢复到最近'); } },
+      ]);
+      return;
+    }
     confirmDlg({
       title: '删除文件',
       body: `确定要删除「${f.name}」吗？`,
-      desc: f.saved ? '该文件在「收藏」中的资料将一并删除，此操作无法撤销' : '此操作无法撤销',
+      desc: '将删除文件实体与收藏条目，此操作无法撤销',
       onOk: () => {
         FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
         FILES.splice(FILES.indexOf(f), 1);
@@ -1571,11 +1541,6 @@ function bindContent() {
     e.preventDefault();
     openOpenWith(+n.dataset.fid, e.clientX, e.clientY);
   });
-  el.querySelectorAll('[data-ws]').forEach(n => n.onclick = () => {
-    const ws = n.dataset.ws;
-    state.closedWs[ws] = !state.closedWs[ws];
-    renderContent();
-  });
   el.querySelectorAll('[data-fold]').forEach(n => n.onclick = e => {
     if (e.target.closest('[data-preview]')) return;
     const id = n.dataset.fold;
@@ -1610,7 +1575,6 @@ function bindContent() {
   el.querySelectorAll('[data-ftask]').forEach(b => b.onclick = e => { e.stopPropagation(); addFolderToTask(b.dataset.ftask); });
   el.querySelectorAll('[data-more]').forEach(b => b.onclick = e => { e.stopPropagation(); openMoreMenu(+b.dataset.more, b); });
   el.querySelectorAll('[data-fmore]').forEach(b => b.onclick = e => { e.stopPropagation(); openFolderMenu(b.dataset.fmore, b); });
-  $('#kbGroupBtn').onclick = () => { state.groupConv = !state.groupConv; renderAll(); };
   el.querySelectorAll('[data-save]').forEach(b => b.onclick = e => { e.stopPropagation(); saveOne(+b.dataset.save); });
   el.ondragover = e => { e.preventDefault(); };
   el.ondrop = e => {
