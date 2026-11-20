@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v36</title>
+<title>KerWork 资料库 · 原型 v37</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -651,8 +651,8 @@ const icHtml = (f, size) => `<span class="file-ic" style="width:${size || 24}px;
 function savedFiles() { return FILES.filter(f => f.saved); }
 const recentList = () => FILES.filter(f => f.recent !== false);
 function recentFiles() { return recentList().sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN)).slice(0, 5); }
-const TYPE_MAP = { md: '文档', docx: '文档', doc: '文档', pdf: '文档', txt: '文档', xlsx: '表格', csv: '表格', numbers: '表格', pptx: '幻灯片', key: '幻灯片', png: '图片', jpg: '图片', jpeg: '图片', gif: '图片', webp: '图片', mp4: '视频', mov: '视频', mp3: '音频', wav: '音频', html: '网页' };
-const TYPE_OPTIONS = ['全部类型', '文档', '表格', '幻灯片', '图片', '网页', '视频', '音频'];
+const TYPE_MAP = { md: '文档', docx: '文档', doc: '文档', pdf: '文档', txt: '文档', xlsx: '表格', csv: '表格', numbers: '表格', pptx: '幻灯片', key: '幻灯片', png: '图片', jpg: '图片', jpeg: '图片', gif: '图片', webp: '图片', html: '网页' };
+const TYPE_OPTIONS = ['全部类型', '文档', '表格', '幻灯片', '网页', '图片'];
 function applyFilter(list) {
   let out = list;
   if (state.type !== '全部类型') out = out.filter(f => TYPE_MAP[f.ext] === state.type);
