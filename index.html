@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v38</title>
+<title>KerWork 资料库 · 原型 v39</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -1184,7 +1184,7 @@ let pickerRows = [];
 let pickerShowSel = false;
 let pickerExpanded = new Set();
 let pickerMore = {};
-function openPicker() {
+function openPicker(anchorItem) {
   pickerSel = new Set(home.chips.filter(c => !c.isFolder).map(c => c.id));
   pickerSelFolders = new Set(home.chips.filter(c => c.isFolder).map(c => c.id.replace('fold-', '')));
   pickerType = '全部类型';
@@ -1193,25 +1193,36 @@ function openPicker() {
   pickerExpanded = new Set(FOLDERS.map(fd => fd.id));
   pickerMore = {};
   renderPicker('');
-  const anchor = $('#chatPlusBtn');
   const box = $('#pickerBox');
-  if (anchor) {
-    const r = anchor.getBoundingClientRect();
-    box.style.left = Math.max(12, r.left) + 'px';
-    box.style.top = 'auto';
-    box.style.bottom = (window.innerHeight - r.top + 10) + 'px';
+  const menu = $('#chatPlusMenu');
+  if (anchorItem && menu.classList.contains('show')) {
+    const mr = menu.getBoundingClientRect();
+    const ir = anchorItem.getBoundingClientRect();
     box.style.transform = 'none';
-  } else {
-    box.style.left = '50%';
-    box.style.top = '50%';
     box.style.bottom = 'auto';
-    box.style.transform = 'translate(-50%, -50%)';
+    box.style.left = Math.min(mr.right + 10, window.innerWidth - 392) + 'px';
+    box.style.top = Math.max(12, Math.min(ir.top - 6, window.innerHeight - 512)) + 'px';
+  } else {
+    const anchor = $('#chatPlusBtn');
+    if (anchor) {
+      const r = anchor.getBoundingClientRect();
+      box.style.left = Math.max(12, r.left) + 'px';
+      box.style.top = 'auto';
+      box.style.bottom = (window.innerHeight - r.top + 10) + 'px';
+      box.style.transform = 'none';
+    } else {
+      box.style.left = '50%';
+      box.style.top = '50%';
+      box.style.bottom = 'auto';
+      box.style.transform = 'translate(-50%, -50%)';
+    }
   }
   $('#pickerMask').classList.remove('hidden');
   document.addEventListener('keydown', pickerKeys, true);
 }
 function closePicker() {
   $('#pickerMask').classList.add('hidden');
+  closeMenus();
   document.removeEventListener('keydown', pickerKeys, true);
 }
 function pickerToggle(id, isFolder) {
@@ -1634,16 +1645,18 @@ $('#fileInput').onchange = e => {
 $('#chatPlusMenu').onclick = e => {
   const b = e.target.closest('[data-cp]');
   if (!b) return;
-  closeMenus();
-  if (b.dataset.cp === 'lib') openPicker();
-  else if (b.dataset.cp === 'file') toast('原型演示：打开系统文件选择器');
-  else if (b.dataset.cp === 'spark') toast('原型演示：选择灵光指令');
-  else toast('原型演示：选择专家');
+  if (b.dataset.cp === 'lib') openPicker(b);
+  else {
+    closeMenus();
+    if (b.dataset.cp === 'file') toast('原型演示：打开系统文件选择器');
+    else if (b.dataset.cp === 'spark') toast('原型演示：选择灵光指令');
+    else toast('原型演示：选择专家');
+  }
 };
 $('#pickerMask').onclick = e => { if (e.target === e.currentTarget) closePicker(); };
 const libMenuItem = document.querySelector('#chatPlusMenu [data-cp="lib"]');
 if (libMenuItem) libMenuItem.onmouseenter = () => {
-  if ($('#pickerMask').classList.contains('hidden')) { closeMenus(); openPicker(); }
+  if ($('#pickerMask').classList.contains('hidden')) openPicker(libMenuItem);
 };
 document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => {
   if (n.dataset.nav !== '资料库') toast(`原型演示：切换到「${n.dataset.nav}」`);
