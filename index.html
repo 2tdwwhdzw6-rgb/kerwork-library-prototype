@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v37</title>
+<title>KerWork 资料库 · 原型 v38</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -1641,6 +1641,10 @@ $('#chatPlusMenu').onclick = e => {
   else toast('原型演示：选择专家');
 };
 $('#pickerMask').onclick = e => { if (e.target === e.currentTarget) closePicker(); };
+const libMenuItem = document.querySelector('#chatPlusMenu [data-cp="lib"]');
+if (libMenuItem) libMenuItem.onmouseenter = () => {
+  if ($('#pickerMask').classList.contains('hidden')) { closeMenus(); openPicker(); }
+};
 document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => {
   if (n.dataset.nav !== '资料库') toast(`原型演示：切换到「${n.dataset.nav}」`);
   else { state.page = 'lib'; render(); }
