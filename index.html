@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v40</title>
+<title>KerWork 资料库 · 原型 v41</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -713,9 +713,7 @@ function headRowHtml() {
   return `<div class="kb-tablehead"><span>名称</span><span></span><span>类型</span><span>时间</span></div>`;
 }
 function rowHtml(f, view, lv) {
-  const starTitle = f.saved
-    ? (view === 'mine' ? '取消收藏' : '更新到收藏（覆盖新版）')
-    : '收藏';
+  const starTitle = f.saved ? '取消收藏' : '收藏';
   return `<div class="kb-row ${lv === 2 ? 'lv2' : ''}" data-fid="${f.id}"${view === 'mine' ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <div class="c-name">${icHtml(f, 26)}<span class="nm">${f.name}</span>
       <span class="c-inline">
@@ -762,7 +760,7 @@ function cardHtml(f) {
   return `<div class="g-card" data-fid="${f.id}"${mine ? ` draggable="true" data-dragfid="${f.id}"` : ''}>
     <div class="g-acts">
       <button class="kb-ic-btn" data-more="${f.id}" title="更多操作"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
-      <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? (mine ? '取消收藏' : '更新快照到收藏') : '收藏'}">${svgStar(f.saved)}</button>
+      <button class="g-star ${f.saved ? '' : 'off'}" data-save="${f.id}" title="${f.saved ? '取消收藏' : '收藏'}">${svgStar(f.saved)}</button>
       <button class="kb-ic-btn" data-task="${f.id}" title="添加到对话">${svgAddChat}</button>
     </div>
     <div class="g-ic">${icHtml(f, 40)}</div>
@@ -870,33 +868,14 @@ function viewerDocHtml(f) {
 function saveOne(id) {
   const f = FILES.find(x => x.id === id);
   if (!f) return;
-  if (f.saved) {
-    /* 「收藏」内点击已点亮的 ⭐ = 取消收藏（轻操作，不弹确认） */
-    if (state.page === 'lib' && state.knav === 'mine') { unsaveOne(f); return; }
-    /* 其余场景：已收藏的星标 = 再次收藏更新（快照刷新） */
-    touch(id); f.time = '刚刚'; f.timeN = 0; renderAll();
-    toast(`「${f.name}」快照已更新`);
-    return;
-  }
-  /* 同会话 + 同名 → 覆盖旧版，版本 +1 */
+  if (f.saved) { unsaveOne(f); return; }
+  /* 引用模型：同会话同名 = 同一路径，已收藏则不重复入库 */
   const dup = savedFiles().find(x => x.conv === f.conv && x.name === f.name);
-  let keepFolder = null;
-  if (dup) {
-    dup.saved = false;
-    f.ver = dup.ver + 1;
-    keepFolder = dup.folderId || null;
-    FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== dup.id));
-    delete dup.folderId;
-  }
+  if (dup) { touch(id); renderAll(); toast('该文件已在收藏中'); return; }
   f.saved = true;
-  const keepFd = keepFolder && FOLDERS.find(x => x.id === keepFolder);
-  if (keepFd) {
-    FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== f.id));
-    keepFd.files.push(f.id);
-    f.folderId = keepFd.id;
-  } else putInDefault(f);
+  putInDefault(f);
   renderAll();
-  toast(dup ? `已更新至 v${f.ver}，已覆盖旧版` : '已收藏');
+  toast('已收藏');
 }
 function putInDefault(f) {
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
@@ -907,16 +886,13 @@ function putInDefault(f) {
 }
 function unsaveOne(f) {
   const prevFolder = f.folderId || null;
-  const uploaded = !!f.uploaded;
   f.saved = false;
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
   delete f.folderId;
-  if (uploaded) { const i = FILES.indexOf(f); if (i > -1) FILES.splice(i, 1); }
   renderAll();
-  toast(uploaded ? `已从收藏移除「${f.name}」，文件已删除` : `已从收藏移除「${f.name}」`, [
+  toast(`已从收藏移除「${f.name}」`, [
     { label: '撤销', cb: () => {
       f.saved = true;
-      if (!FILES.includes(f)) FILES.push(f);
       if (prevFolder) {
         const fd = FOLDERS.find(x => x.id === prevFolder);
         if (fd && !fd.files.includes(f.id)) { fd.files.push(f.id); f.folderId = prevFolder; }
@@ -1640,7 +1616,7 @@ $('#fileInput').onchange = e => {
   });
   state.knav = 'mine';
   renderAll();
-  toast(added && skipped ? `已上传 ${added} 个文件，${skipped} 个已存在跳过` : added ? `已上传 ${added} 个文件到收藏「默认」文件夹` : '文件已存在，未重复上传');
+  toast(added && skipped ? `已添加 ${added} 个文件，${skipped} 个已存在跳过` : added ? `已添加 ${added} 个文件到收藏「默认」文件夹` : '文件已存在，未重复添加');
 };
 $('#chatPlusMenu').onclick = e => {
   const b = e.target.closest('[data-cp]');
