@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v39</title>
+<title>KerWork 资料库 · 原型 v40</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -697,7 +697,7 @@ function renderContent() {
   if (state.knav === 'recent') {
     const list = sortList(applyFilter(recentList()));
     if (!list.length) {
-      el.innerHTML = `<div class="kb-empty">${recentList().length ? '没有符合条件的资料' : '跑一个任务，产物会自动出现在这里'}</div>`;
+      el.innerHTML = `<div class="kb-empty">${recentList().length ? '没有符合条件的资料' : '生成的资料会自动出现在这里'}</div>`;
     } else if (state.view === 'grid') {
       el.innerHTML = `<div class="kb-grid">${list.map(cardHtml).join('')}</div>`;
     } else {
