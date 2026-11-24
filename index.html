@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v41</title>
+<title>KerWork 资料库 · 原型 v42</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -124,6 +124,9 @@ input { font-family: inherit; }
 .kb-search:focus-within { border-color: #c9c9ce; background: var(--card); }
 .kb-search svg { color: var(--muted); flex-shrink: 0; }
 .kb-search input { border: none; outline: none; background: transparent; width: 100%; font-size: 12.5px; }
+.kb-search-clear { display: none; width: 18px; height: 18px; border-radius: 50%; background: #d8d8dc; color: #666; font-size: 10px; flex-shrink: 0; cursor: pointer; border: none; }
+.kb-search-clear:hover { background: #c8c8cc; color: #333; }
+.kb-search.has-q .kb-search-clear { display: grid; place-items: center; }
 .kb-new-btn {
   display: flex; align-items: center; gap: 7px;
   height: 34px; padding: 0 16px; border-radius: 10px;
@@ -395,6 +398,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .picker-search:focus-within { border-color: #c9c9ce; background: var(--card); }
 .picker-search svg { color: var(--muted); flex-shrink: 0; }
 .picker-search input { border: none; outline: none; background: transparent; width: 100%; font-size: 12.5px; }
+.pk-search-clear { display: none; width: 18px; height: 18px; border-radius: 50%; background: #d8d8dc; color: #666; font-size: 10px; flex-shrink: 0; cursor: pointer; border: none; }
+.pk-search-clear:hover { background: #c8c8cc; color: #333; }
+.picker-search.has-q .pk-search-clear { display: grid; place-items: center; }
 .picker-body { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
 .picker-sec { font-size: 11.5px; color: var(--muted); font-weight: 600; padding: 10px 6px 4px; }
 .picker-row {
@@ -557,9 +563,10 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
             <div class="kb-sub">把零散资料，变成自己的知识</div>
           </div>
           <div class="kb-head-actions">
-            <div class="kb-search">
+            <div class="kb-search" id="kbSearchBox">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input id="kbSearch" placeholder="搜索资料"/>
+              <button class="kb-search-clear" id="kbSearchClear" title="清空搜索">✕</button>
             </div>
             <button class="kb-new-btn" id="kbNewBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新建</button>
           </div>
@@ -569,7 +576,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
           <button class="kb-tab" data-knav="mine">收藏<span class="cnt" id="mineCnt"></span></button>
           <div class="kb-toolbar-right">
             <button class="kb-sort" id="kbTypeBtn"></button>
-            <button class="kb-sort" id="kbSortBtn"></button>
+
             <div class="vt-group" id="viewToggle"></div>
           </div>
         </nav>
@@ -590,8 +597,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 <input type="file" id="fileInput" multiple style="display:none">
 <!-- 快速添加菜单 -->
 <div class="menu" id="addMenu"></div>
-<!-- 排序菜单 -->
-<div class="menu" id="sortMenu"></div>
+
 <!-- 打开方式菜单 -->
 <div class="menu" id="openMenu"></div>
 <!-- 类型筛选菜单 -->
@@ -683,8 +689,7 @@ function renderTabs() {
   document.querySelectorAll('.kb-tab').forEach(n => n.classList.toggle('on', n.dataset.knav === state.knav));
   $('#kbNewBtn').style.display = state.knav === 'mine' ? '' : 'none';
   $('#kbTypeBtn').innerHTML = `${state.type} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 15 12 9 18 15"/></svg>`;
-  const sortLabel = { time: '最近更新', name: '按名称', size: '按大小' }[state.sort];
-  $('#kbSortBtn').innerHTML = `${sortLabel} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+
   $('#viewToggle').innerHTML = `
     <button class="vt-btn ${state.view === 'list' ? 'on' : ''}" data-view="list" title="列表视图"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg></button>
     <button class="vt-btn ${state.view === 'grid' ? 'on' : ''}" data-view="grid" title="网格视图"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>`;
@@ -740,7 +745,8 @@ function folderRowHtml(fd) {
   return folderHeaderHtml(fd) + (!state.closedFolders[fd.id] ? folderDetailHtml(fd) : '');
 }
 function folderDetailHtml(fd) {
-  const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
+  const allItems = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
+  const items = (state.q || state.type !== '全部类型') ? applyFilter(allItems) : allItems;
   if (!items.length) return `<div class="kb-detail"><div class="kb-row sub" style="cursor:default"><span class="c-td">空文件夹 · 把文件拖到这里即可移入</span></div></div>`;
   if (state.view === 'grid') return `<div class="kb-detail" style="padding:8px"><div class="kb-grid">${items.map(cardHtml).join('')}</div></div>`;
   return `<div class="kb-detail">${items.map(f => `
@@ -781,20 +787,22 @@ function mineEmptyHtml() {
   return `<div class="kb-empty"><div class="kb-empty-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="kb-empty-title">还没有收藏的资料</div><div class="kb-empty-desc">在「最近」列表点 ⭐，或通过右上角「新建」上传文件，资料会收进「默认」文件夹</div><button class="kb-empty-btn" onclick="gotoRecent()">去「最近」挑选</button></div>`;
 }
 function mineHtml() {
-  const files = sortList(applyFilter(savedFiles().filter(f => !f.folderId)));
   const filtered = state.q || state.type !== '全部类型';
   const guide = !savedFiles().length && !filtered ? mineEmptyHtml()
-    : filtered && !files.length && !FOLDERS.length ? '<div class="kb-empty">没有符合条件的资料</div>' : '';
+    : filtered && !FOLDERS.some(fd => applyFilter(fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean)).length) ? '<div class="kb-empty">没有符合条件的资料</div>' : '';
   if (state.view === 'grid') {
     let html = `${guide}` + FOLDERS.map(fd => {
-      const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean);
+      const items = applyFilter(fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean));
+      if (filtered && !items.length) return '';
       return folderHeaderHtml(fd) + (state.closedFolders[fd.id] ? '' : `<div class="kb-grid" style="margin:4px 0 8px">${items.map(cardHtml).join('') || '<div class="kb-empty" style="padding:22px">空文件夹</div>'}</div>`);
     }).join('');
-    if (files.length) html += `<div class="picker-sec pk-sub">未分组</div><div class="kb-grid">${files.map(cardHtml).join('')}</div>`;
     return html;
   }
-  const rows = FOLDERS.map(fd => folderRowHtml(fd)).join('')
-    + files.map(f => rowHtml(f, 'mine')).join('');
+  const rows = FOLDERS.map(fd => {
+    const items = applyFilter(fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean));
+    if (filtered && !items.length) return '';
+    return folderRowHtml(fd);
+  }).join('');
   return `${guide}<div class="kb-list">${headRowHtml()}${rows}</div>`;
 }
 /* ============ 文档内容预览 ============ */
@@ -890,7 +898,7 @@ function unsaveOne(f) {
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
   delete f.folderId;
   renderAll();
-  toast(`已从收藏移除「${f.name}」`, [
+  toast(`已取消收藏`, [
     { label: '撤销', cb: () => {
       f.saved = true;
       if (prevFolder) {
@@ -965,7 +973,7 @@ function openMoreMenu(id, btn) {
     confirmDlg({
       title: '删除文件',
       body: `确定要删除「${f.name}」吗？`,
-      desc: '将删除文件实体与对应收藏条目，此操作无法撤销',
+      desc: f.uploaded ? '将删除本地原文件与对应收藏条目，此操作无法撤销' : '将删除文件实体与对应收藏条目，此操作无法撤销',
       onOk: () => {
         FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
         FILES.splice(FILES.indexOf(f), 1);
@@ -995,9 +1003,9 @@ function openFolderMenu(id, btn) {
   if (fdelBtn) fdelBtn.onclick = () => {
     closeMenus();
     confirmDlg({
-      title: '删除文件夹',
-      body: `确定要删除文件夹「${fd.name}」及其资料吗？`,
-      desc: `文件夹里的 ${fd.files.length} 份文件会一并删除，此操作无法撤销`,
+      title: '删除文件夹？',
+      body: `将删除"${fd.name}"及其中的 ${fd.files.length} 个文件。此操作无法撤销。`,
+      desc: fd.files.length === 0 ? '空文件夹，仅删除文件夹本身' : '',
       onOk: () => {
         fd.files.forEach(fid => { const i = FILES.findIndex(x => x.id === fid); if (i > -1) FILES.splice(i, 1); });
         FOLDERS.splice(FOLDERS.indexOf(fd), 1);
@@ -1026,7 +1034,7 @@ function showBanner(text, actions) {
 }
 function askSink(f, reason) {
   if (f.saved) return;
-  showBanner(`${reason}，要收藏吗？`, [
+  showBanner(`监测到您多次使用该资料，要帮您收藏吗？`, [
     { label: '收藏', cb: () => { saveOne(f.id); } },
     { label: '忽略', cb: () => {} },
   ]);
@@ -1096,11 +1104,6 @@ function renderHome() {
       m.classList.add('show');
     }
   };
-  el.querySelectorAll('[data-cow]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    const r = b.getBoundingClientRect();
-    openOpenWith(+b.dataset.cow, r.left - 160, r.bottom + 6);
-  });
   el.querySelectorAll('[data-cstar]').forEach(b => b.onclick = e => {
     e.stopPropagation();
     saveOne(+b.dataset.cstar);
@@ -1154,20 +1157,14 @@ function renderLanding(el) {
 /* ============ 资料库挑选浮层（+ 菜单入口） ============ */
 let pickerSel = new Set();
 let pickerSelFolders = new Set();
-let pickerType = '全部类型';
 let pickerActive = -1;
 let pickerRows = [];
 let pickerShowSel = false;
-let pickerExpanded = new Set();
-let pickerMore = {};
 function openPicker(anchorItem) {
   pickerSel = new Set(home.chips.filter(c => !c.isFolder).map(c => c.id));
-  pickerSelFolders = new Set(home.chips.filter(c => c.isFolder).map(c => c.id.replace('fold-', '')));
-  pickerType = '全部类型';
+  pickerSelFolders = new Set();
   pickerActive = -1;
   pickerShowSel = false;
-  pickerExpanded = new Set(FOLDERS.map(fd => fd.id));
-  pickerMore = {};
   renderPicker('');
   const box = $('#pickerBox');
   const menu = $('#chatPlusMenu');
@@ -1232,114 +1229,68 @@ function pickerKeys(e) {
   } else if (e.key === ' ') {
     e.preventDefault();
     const r = pickerRows[pickerActive];
-    if (r && r.more) { pickerMore[r.id] = (pickerMore[r.id] || 0) + 1; renderPicker($('#pkSearch').value); }
-    else if (r) pickerToggle(r.id, r.isFolder);
+    if (r) pickerToggle(r.id, false);
   }
 }
 function renderPicker(q) {
   q = (q || '').toLowerCase();
-  const typeOk = f => pickerType === '全部类型' || TYPE_MAP[f.ext] === pickerType;
   const row = (f, i) => `<div class="picker-row ${pickerSel.has(f.id) ? 'on' : ''} ${pickerActive === i ? 'active' : ''}" data-pid="${f.id}" data-rowindex="${i}">
     ${icHtml(f, 26)}<span class="pk-name">${f.name}</span><span class="pk-ext">${f.ext.toUpperCase()}</span><span class="pk-meta">${f.size}</span>
     <span class="pk-check">${pickerSel.has(f.id) ? '✓' : ''}</span></div>`;
-  const frow = (fd, i) => `<div class="picker-row ${pickerSelFolders.has(fd.id) ? 'on' : ''} ${pickerActive === i ? 'active' : ''}" data-fid2="${fd.id}" data-rowindex="${i}">
-    <span class="pk-chev ${pickerExpanded.has(fd.id) ? 'open' : ''}" data-pexp="${fd.id}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>
-    <span class="file-ic" style="width:26px;height:26px;background:#f5b840;font-size:8px">DIR</span><span class="pk-name">${fd.name}</span><span class="pk-ext">${fd.files.length} 个文件</span>
-    <span class="pk-check">${pickerSelFolders.has(fd.id) ? '✓' : ''}</span></div>`;
   let idx = 0;
   pickerRows = [];
-  const fileRow = (f, nested) => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++).replace('picker-row', 'picker-row' + (nested ? ' nested' : '')); };
-  const folderRow = fd => { pickerRows.push({ id: fd.id, isFolder: true }); return frow(fd, idx++); };
-  const match = f => typeOk(f) && (!q || f.name.toLowerCase().includes(q));
-  const folderBlock = fd => {
-    folderRow(fd);
-    if (!pickerExpanded.has(fd.id)) return '';
-    const items = fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean).filter(match);
-    if (!items.length) return '<div class="picker-row nested pk-none" style="text-align:left;padding-left:30px">空文件夹</div>';
-    const shown = Math.min(items.length, 5 + (pickerMore[fd.id] || 0) * 10);
-    let block = items.slice(0, shown).map(f => fileRow(f, true)).join('');
-    if (items.length > shown) {
-      pickerRows.push({ more: true, id: fd.id });
-      block += `<div class="picker-row picker-more ${pickerActive === idx ? 'active' : ''}" data-pmore="${fd.id}" data-rowindex="${idx++}"><button class="pk-more-btn">展开更多（还有 ${items.length - shown} 个）</button></div>`;
-    }
-    return block;
-  };
-  const files = sortList(FILES.filter(typeOk));
-  const folders = FOLDERS.filter(fd => !q || fd.name.toLowerCase().includes(q));
-  const matched = files.filter(f => !q || f.name.toLowerCase().includes(q));
+  const fileRow = f => { pickerRows.push({ id: f.id, isFolder: false }); return row(f, idx++); };
+  const all = [...FILES].sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN));
+  const matched = q ? all.filter(f => f.name.toLowerCase().includes(q)) : all;
   let body;
-  if (q) {
-    const loose = matched.filter(f => !f.folderId);
-    const rows = folders.map(folderBlock).join('') + loose.map(f => fileRow(f, false)).join('');
-    body = `<div class="picker-sec">搜索结果</div>${rows || `<div class="pk-none">无匹配资料<button class="bn-btn" id="pkClear">清空搜索</button></div>`}`;
+  if (!matched.length) {
+    body = q
+      ? `<div class="pk-none">无匹配资料<button class="bn-btn" id="pkClear">清空搜索</button></div>`
+      : '<div class="pk-none">暂无最近资料</div>';
   } else {
-    const loose = savedFiles().filter(f => !f.folderId && typeOk(f));
-    const recent = recentList().filter(typeOk).sort((a, b) => (a.act ?? a.timeN) - (b.act ?? b.timeN)).slice(0, 5);
-    body = `<div class="picker-sec">收藏</div>${folders.map(folderBlock).join('')}${loose.length ? `<div class="picker-sec pk-sub">未分组</div>${loose.map(f => fileRow(f, false)).join('')}` : ''}
-      <div class="picker-sec">最近</div>${recent.length ? recent.map(f => fileRow(f, false)).join('') : '<div class="pk-none">暂无最近资料</div>'}`;
+    body = matched.map(f => fileRow(f)).join('');
   }
-  const selCount = pickerSel.size + pickerSelFolders.size;
-  const selNames = [
-    ...[...pickerSelFolders].map(fid => { const fd = FOLDERS.find(x => x.id === fid); return fd ? { kind: 'fold', name: fd.name, id: fid } : null; }),
-    ...[...pickerSel].map(fid => { const f = FILES.find(x => x.id === fid); return f ? { kind: 'file', name: f.name, id: fid } : null; }),
-  ].filter(Boolean);
-  const selPanel = pickerShowSel && selCount ? `<div class="pk-selpanel">${selNames.map(s => `<span class="pk-selchip">${s.name}<button class="pk-selx" data-selx="${s.kind}:${s.id}">✕</button></span>`).join('')}</div>` : '';
-  const typeChips = TYPE_OPTIONS.map(t => `<button class="pk-type ${pickerType === t ? 'on' : ''}" data-ptype="${t}">${t}</button>`).join('');
+  const selCount = pickerSel.size;
+  const selNames = [...pickerSel].map(fid => { const f = FILES.find(x => x.id === fid); return f ? { kind: 'file', name: f.name, id: fid } : null; }).filter(Boolean);
+
   $('#pickerBox').innerHTML = `
     <div class="picker-head"><span class="picker-title">从资料库添加</span><button class="kb-ic-btn" id="pkClose">✕</button></div>
-    <div class="picker-search">
+    <div class="picker-search ${q ? 'has-q' : ''}">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="pkSearch" placeholder="搜索资料" value="${q.replace(/"/g, '&quot;')}"/>
+      <button class="pk-search-clear" id="pkSearchClear" title="清空搜索">✕</button>
     </div>
-    <div class="pk-types">${typeChips}</div>
     <div class="picker-body">${body}</div>
-    ${selPanel}
     <div class="picker-foot">
-      <span class="pk-cnt ${selCount ? 'link' : ''}" id="pkCount">已选 ${selCount} 项${selCount ? (pickerShowSel ? ' ▴' : ' ▾') : ''}</span>
+      <span class="pk-cnt" id="pkCount">已选 ${selCount} 项</span>
       <button class="bn-btn" id="pkCancel">取消</button>
       <button class="bn-btn primary" id="pkAdd">添加到对话</button>
     </div>`;
   $('#pkClose').onclick = closePicker;
   $('#pkCancel').onclick = closePicker;
   $('#pkAdd').onclick = () => {
-    const folderChips = [...pickerSelFolders].map(fid => { const fd = FOLDERS.find(x => x.id === fid); return fd ? { id: 'fold-' + fid, name: fd.name, ext: 'DIR', color: '#f5b840', isFolder: true, count: fd.files.length } : null; }).filter(Boolean).filter(c => !home.chips.some(h => String(h.id) === c.id));
     const fileChips = FILES.filter(f => pickerSel.has(f.id) && !home.chips.includes(f));
-    home.chips = [...home.chips, ...folderChips, ...fileChips];
-    const n = folderChips.length + fileChips.length;
-    const reused = [...fileChips, ...folderChips.flatMap(c => { const fd = FOLDERS.find(x => x.id === String(c.id).replace('fold-', '')); return fd ? fd.files.map(fid => FILES.find(x => x.id === fid)).filter(Boolean) : []; })];
-    const uniqReused = [...new Set(reused)];
-    uniqReused.forEach(f => { f.uses = (f.uses || 0) + 1; touch(f.id); });
+    home.chips = [...home.chips, ...fileChips];
+    const n = fileChips.length;
+    fileChips.forEach(f => { f.uses = (f.uses || 0) + 1; touch(f.id); });
     closePicker();
     renderHome();
     toast(`已添加 ${n} 项引用`);
-    const hot = uniqReused.find(f => f.uses >= 2 && !f.saved);
+    const hot = fileChips.find(f => f.uses >= 2 && !f.saved);
     if (hot) setTimeout(() => askSink(hot, `「${hot.name}」已被多次复用`), 600);
   };
   $('#pkSearch').oninput = e => {
     const pos = e.target.selectionStart;
+    e.target.closest('.picker-search').classList.toggle('has-q', !!e.target.value.trim());
     renderPicker(e.target.value);
     const s = $('#pkSearch');
     s.focus();
     s.setSelectionRange(pos, pos);
   };
   const clearBtn = $('#pkClear'); if (clearBtn) clearBtn.onclick = () => renderPicker('');
-  $('#pickerBox').querySelectorAll('[data-ptype]').forEach(b => b.onclick = () => { pickerType = b.dataset.ptype; renderPicker($('#pkSearch').value); });
+  const pkSearchClear = $('#pkSearchClear'); if (pkSearchClear) pkSearchClear.onclick = () => renderPicker('');
   $('#pickerBox').querySelectorAll('[data-pid]').forEach(r => r.onclick = () => pickerToggle(+r.dataset.pid, false));
-  $('#pickerBox').querySelectorAll('[data-fid2]').forEach(r => r.onclick = () => pickerToggle(r.dataset.fid2, true));
-  $('#pickerBox').querySelectorAll('[data-pmore]').forEach(r => r.onclick = () => { pickerMore[r.dataset.pmore] = (pickerMore[r.dataset.pmore] || 0) + 1; renderPicker($('#pkSearch').value); });
-  $('#pickerBox').querySelectorAll('[data-pexp]').forEach(ch => ch.onclick = e => {
-    e.stopPropagation();
-    const fid = ch.dataset.pexp;
-    pickerExpanded.has(fid) ? pickerExpanded.delete(fid) : pickerExpanded.add(fid);
-    renderPicker($('#pkSearch').value);
-  });
-  $('#pickerBox').querySelectorAll('[data-selx]').forEach(b => b.onclick = e => {
-    e.stopPropagation();
-    const [kind, id] = b.dataset.selx.split(':');
-    (kind === 'fold' ? pickerSelFolders : pickerSel).delete(kind === 'fold' ? id : +id);
-    renderPicker($('#pkSearch').value);
-  });
-  const cnt = $('#pkCount'); if (cnt && selCount) cnt.onclick = () => { pickerShowSel = !pickerShowSel; renderPicker($('#pkSearch').value); };
+
 }
 function msgHtml(m) {
   if (m.role === 'user') return `<div class="msg-user">${m.text}</div>`;
@@ -1354,7 +1305,6 @@ function msgHtml(m) {
       <span class="att-icon" style="background:${f.color}">${f.ext.toUpperCase()}</span>
       <span class="att-txt"><div class="att-name">${f.name}</div>${f.saved ? '<div class="att-ext">已保存到「收藏」</div>' : ''}</span>
       <button class="kb-ic-btn star ${f.saved ? 'on' : ''}" data-cstar="${f.id}" title="${f.saved ? '更新快照到收藏' : '收藏'}">${svgStar(f.saved)}</button>
-      <button class="chat-ow" data-cow="${f.id}">打开方式 ▾</button>
     </div>`;
   }
   return `<div class="msg-ai">${m.text.replace(/\n/g, '<br>')}</div>`;
@@ -1489,7 +1439,8 @@ document.querySelectorAll('.kb-tab').forEach(n => n.onclick = () => {
   state.knav = n.dataset.knav;
   renderAll();
 });
-$('#kbSearch').oninput = e => { state.q = e.target.value.trim(); renderContent(); };
+$('#kbSearch').oninput = e => { state.q = e.target.value.trim(); $('#kbSearchBox').classList.toggle('has-q', !!state.q); renderContent(); };
+$('#kbSearchClear').onclick = () => { $('#kbSearch').value = ''; state.q = ''; $('#kbSearchBox').classList.remove('has-q'); renderContent(); };
 $('#kbTypeBtn').onclick = e => {
   e.stopPropagation();
   const m = $('#typeMenu');
@@ -1506,23 +1457,7 @@ $('#typeMenu').onclick = e => {
   renderTabs();
   renderContent();
 };
-$('#kbSortBtn').onclick = e => {
-  e.stopPropagation();
-  const m = $('#sortMenu');
-  const open = m.classList.contains('show');
-  closeMenus();
-  if (!open) { const r = e.currentTarget.getBoundingClientRect(); m.style.top = r.bottom + 6 + 'px'; m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 216)) + 'px'; m.classList.add('show'); }
-};
-$('#sortMenu').innerHTML = [['time', '最近更新'], ['name', '按名称'], ['size', '按大小']]
-  .map(([v, label]) => `<button class="menu-item" data-sort="${v}">${label}</button>`).join('');
-$('#sortMenu').onclick = e => {
-  const b = e.target.closest('[data-sort]');
-  if (!b) return;
-  state.sort = b.dataset.sort;
-  closeMenus();
-  renderTabs();
-  renderContent();
-};
+
 function bindContent() {
   const el = $('#kbContent');
   el.querySelectorAll('[data-fid]').forEach(n => n.onclick = e => {
@@ -1572,11 +1507,15 @@ function bindContent() {
   el.ondrop = e => {
     const fid = +e.dataTransfer.getData('text/plain');
     const f = FILES.find(x => x.id === fid);
-    if (!f || !f.folderId) return;
+    if (!f) return;
+    let def = FOLDERS.find(x => x.id === 'F0');
+    if (!def) { def = { id: 'F0', name: '默认', files: [] }; FOLDERS.unshift(def); }
+    if (def.files.includes(fid)) return;
     FOLDERS.forEach(x => x.files = x.files.filter(xid => xid !== fid));
-    delete f.folderId;
+    def.files.push(fid);
+    f.folderId = def.id;
     renderAll();
-    toast(`已移出「${f.name}」，文件移至收藏顶层`);
+    toast(`已移入「${def.name}」文件夹`);
   };
 }
 $('#kbNewBtn').onclick = e => {
@@ -1630,15 +1569,11 @@ $('#chatPlusMenu').onclick = e => {
   }
 };
 $('#pickerMask').onclick = e => { if (e.target === e.currentTarget) closePicker(); };
-const libMenuItem = document.querySelector('#chatPlusMenu [data-cp="lib"]');
-if (libMenuItem) libMenuItem.onmouseenter = () => {
-  if ($('#pickerMask').classList.contains('hidden')) openPicker(libMenuItem);
-};
 document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => {
   if (n.dataset.nav !== '资料库') toast(`原型演示：切换到「${n.dataset.nav}」`);
   else { state.page = 'lib'; render(); }
 });
-document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('#kbNewBtn') && !e.target.closest('#kbSortBtn')) closeMenus(); });
+document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('#kbNewBtn')) closeMenus(); });
 
 render();
 </script></body>
