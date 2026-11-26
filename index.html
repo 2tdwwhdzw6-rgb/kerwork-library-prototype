@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v42</title>
+<title>KerWork 资料库 · 原型 v43</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -893,21 +893,11 @@ function putInDefault(f) {
   f.folderId = def.id;
 }
 function unsaveOne(f) {
-  const prevFolder = f.folderId || null;
   f.saved = false;
   FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
   delete f.folderId;
   renderAll();
-  toast(`已取消收藏`, [
-    { label: '撤销', cb: () => {
-      f.saved = true;
-      if (prevFolder) {
-        const fd = FOLDERS.find(x => x.id === prevFolder);
-        if (fd && !fd.files.includes(f.id)) { fd.files.push(f.id); f.folderId = prevFolder; }
-      }
-      renderAll(); toast('已恢复收藏');
-    } },
-  ]);
+  toast('已取消收藏');
 }
 function renderAll() { renderTabs(); renderContent(); }
 
@@ -931,7 +921,7 @@ function confirmDlg(opts) {
     ${opts.desc ? `<div class="dlg-desc">${opts.desc}</div>` : ''}
     <div class="dlg-foot">
       <button class="dlg-btn" id="dlgCancel">取消</button>
-      <button class="dlg-btn danger" id="dlgOk">删除</button>
+      <button class="dlg-btn danger" id="dlgOk">${opts.okLabel || '删除'}</button>
     </div>
   </div>`;
   m.classList.remove('hidden');
@@ -951,7 +941,8 @@ function openMoreMenu(id, btn) {
     <button class="menu-item" data-rn="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>重命名</button>
     <button class="menu-item" data-ow="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>打开方式</button>
     <div class="menu-sep"></div>
-    <button class="menu-item" data-del="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除</button>`;
+    <button class="menu-item" data-remove="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>从资料库移除</button>
+    <button class="menu-item" data-del="1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>删除源文件</button>`;
   const r = btn.getBoundingClientRect();
   m.style.top = r.bottom + 6 + 'px';
   m.style.left = Math.max(8, Math.min(r.left - 150, window.innerWidth - 236)) + 'px';
@@ -968,16 +959,21 @@ function openMoreMenu(id, btn) {
   };
   ow.onmouseenter = openOwFlyout;
   ow.onclick = openOwFlyout;
+  m.querySelector('[data-remove]').onclick = () => {
+    closeMenus();
+    FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
+    FILES.splice(FILES.indexOf(f), 1);
+    renderAll(); toast('已从资料库移除');
+  };
   m.querySelector('[data-del]').onclick = () => {
     closeMenus();
     confirmDlg({
-      title: '删除文件',
-      body: `确定要删除「${f.name}」吗？`,
-      desc: f.uploaded ? '将删除本地原文件与对应收藏条目，此操作无法撤销' : '将删除文件实体与对应收藏条目，此操作无法撤销',
+      title: '删除源文件',
+      body: `将永久删除本地文件“${f.name}”，此操作无法撤销。`,
       onOk: () => {
         FOLDERS.forEach(fd => fd.files = fd.files.filter(x => x !== f.id));
         FILES.splice(FILES.indexOf(f), 1);
-        renderAll(); toast('已删除');
+        renderAll(); toast('已删除源文件');
       },
     });
   };
@@ -1004,13 +1000,14 @@ function openFolderMenu(id, btn) {
     closeMenus();
     confirmDlg({
       title: '删除文件夹？',
-      body: `将删除"${fd.name}"及其中的 ${fd.files.length} 个文件。此操作无法撤销。`,
-      desc: fd.files.length === 0 ? '空文件夹，仅删除文件夹本身' : '',
+      body: `将移除“${fd.name}”及其中 ${fd.files.length} 个文件的收藏记录，源文件不受影响。`,
+      desc: fd.files.length === 0 ? '空文件夹，仅移除文件夹本身' : '',
+      okLabel: '移除',
       onOk: () => {
         fd.files.forEach(fid => { const i = FILES.findIndex(x => x.id === fid); if (i > -1) FILES.splice(i, 1); });
         FOLDERS.splice(FOLDERS.indexOf(fd), 1);
         delete state.closedFolders[fd.id];
-        renderAll(); toast('已删除文件夹及其资料');
+        renderAll(); toast('已移除文件夹');
       },
     });
   };
