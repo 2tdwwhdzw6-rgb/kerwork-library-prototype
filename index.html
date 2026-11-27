@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>KerWork 资料库 · 原型 v43</title>
+<title>KerWork 资料库 · 原型 v44</title>
 <link rel="icon" href="data:,"/>
 <style>
 :root {
@@ -1552,7 +1552,7 @@ $('#fileInput').onchange = e => {
   });
   state.knav = 'mine';
   renderAll();
-  toast(added && skipped ? `已添加 ${added} 个文件，${skipped} 个已存在跳过` : added ? `已添加 ${added} 个文件到收藏「默认」文件夹` : '文件已存在，未重复添加');
+  toast(added && skipped ? `已添加 ${added} 个文件，${skipped} 个已存在跳过` : added ? `已添加 ${added} 个文件` : '文件已存在，未重复添加');
 };
 $('#chatPlusMenu').onclick = e => {
   const b = e.target.closest('[data-cp]');
